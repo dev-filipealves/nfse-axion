@@ -66,6 +66,16 @@ body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"S
 #formbox label{display:block;font-size:12px;color:var(--muted);margin:12px 0 4px}
 #formbox input,#formbox textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;font-size:16px;background:transparent;color:var(--fg);font-family:inherit}
 #formbox .btn{margin-top:16px;width:100%;justify-content:center}
+.panel{max-width:796px;margin:12px auto;padding:16px;background:var(--card);border:1px solid var(--line);border-radius:14px}
+.panel h2{font-size:16px;margin:0 0 4px}
+.panel label{display:block;font-size:12px;color:var(--muted);margin:12px 0 4px}
+.panel input{width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;font-size:16px;background:transparent;color:var(--fg);font-family:inherit}
+.panel .btn{margin-top:12px;justify-content:center}
+.small{font-size:12px;color:var(--muted);margin:6px 0;line-height:1.4}
+.item{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:10px;margin-top:10px;cursor:pointer}
+.item .nm{font-weight:700;font-size:14px;word-break:break-all}
+.item .sb{font-size:12px;color:var(--muted);margin-top:2px}
+.item .x{margin-left:auto;background:none;border:0;font-size:20px;cursor:pointer;padding:8px}
 .hint{max-width:820px;margin:0 auto;padding:6px 12px 24px;color:var(--muted);font-size:12px}
 </style>
 </head>
@@ -75,7 +85,9 @@ body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"S
   <div class="btns">
     <button class="btn pickbtn" type="button">📄 Enviar NFS-e (PDF)</button>
     <button class="btn" id="editbtn">✍️ Preencher dados</button>
+    <button class="btn sec" id="listbtn">📚 Minhas notas</button>
     <button class="btn sec" id="cancel">✖ Cancelar nota</button>
+    <button class="btn sec" id="cfgbtn" aria-label="Configurar GitHub">⚙️</button>
     <button class="btn sec" id="dl" disabled>⬇️ Baixar PDF</button>
   </div>
 </div>
@@ -86,6 +98,22 @@ body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"S
   <button class="btn pickbtn" type="button">📄 Enviar NFS-e (PDF)</button>
 </div>
 <div id="formbox"><h2>Preencher dados da nota</h2><div style="font-size:13px;color:var(--muted)">Funciona sem enviar arquivo. O prestador (AXION / seu MEI) já está fixo; altere só o que mudou.</div><div id="ff"></div><button class="btn" id="gen">⚡ Gerar nota</button></div>
+<div id="listbox" class="panel" hidden>
+  <h2>Minhas notas</h2>
+  <div class="small">Toque numa nota para abrir e baixar o PDF de novo.</div>
+  <input id="q" type="search" placeholder="Buscar por número, data ou cliente" autocomplete="off">
+  <div id="items"></div>
+</div>
+<div id="cfgbox" class="panel" hidden>
+  <h2>Guardar notas no GitHub</h2>
+  <div class="small">1) Crie um repositório <b>privado</b> só para os dados (ex.: <b>nfse-dados</b>).<br>2) Em GitHub → Settings → Developer settings → Fine-grained tokens, crie um token apenas para esse repositório, com <b>Contents: Read and write</b>.<br>3) Preencha abaixo. O token fica salvo somente neste aparelho.</div>
+  <label for="c_repo">Repositório (usuário/nome)</label><input id="c_repo" type="text" placeholder="dev-filipealves/nfse-dados" autocomplete="off" autocapitalize="off">
+  <label for="c_token">Token</label><input id="c_token" type="password" placeholder="github_pat_..." autocomplete="off">
+  <label for="c_path">Arquivo do banco</label><input id="c_path" type="text" placeholder="notas.json" autocomplete="off" autocapitalize="off">
+  <button class="btn" id="c_save" style="width:100%">💾 Salvar e testar</button>
+  <button class="btn sec" id="c_clear" style="width:100%">Remover configuração</button>
+  <button class="btn sec" id="c_back" style="width:100%">Voltar</button>
+</div>
 <div id="fit" hidden><div id="paper"></div></div>
 <div class="hint" id="hint" hidden>Dica: toque em qualquer campo da nota para corrigir um texto antes de baixar.</div>
 
@@ -222,7 +250,7 @@ function render(d){
     <div style="max-width:430px">Documento auxiliar personalizado, gerado a partir do DANFSe oficial. A autenticidade da NFS-e deve ser conferida no Portal Nacional da NFS-e pela <b>chave de acesso</b>.<br><b>${esc(FANTASIA)}</b></div>
     <div class="sig">Data de ciência / assinatura</div>
   </div>`;
-  $("#empty").hidden=true; $("#formbox").hidden=true; $("#fit").hidden=false; $("#hint").hidden=false; $("#dl").disabled=false;
+  $("#empty").hidden=true; $("#formbox").hidden=true; $("#listbox").hidden=true; $("#cfgbox").hidden=true; $("#fit").hidden=false; $("#hint").hidden=false; $("#dl").disabled=false;
   fit();
 }
 function fit(){
@@ -238,7 +266,7 @@ async function handleFile(f){
   try{
     const items=await extract(f);
     if(items.length<10) throw new Error("O PDF não tem texto legível. Use o DANFSe original baixado do portal.");
-    current=parse(items); render(current); say("Nota gerada. Confira os dados e baixe o PDF.");
+    current=parse(items); render(current); say("Nota gerada. Confira os dados e baixe o PDF."); saveNote(current);
   }catch(err){ console.error(err); say("Não consegui ler esse arquivo: "+(err.message||err),true); }
   }
 function openPicker(){
@@ -265,16 +293,153 @@ const FIELDS=[["numero","Nº da NFS-e",x=>x.numero],["dps","Nº da DPS",x=>x.dps
 $("#ff").innerHTML=FIELDS.map(([k,l,g,ta])=>`<label for="f_${k}">${l}</label>${ta?`<textarea id="f_${k}" rows="3"></textarea>`:`<input id="f_${k}" type="text" autocomplete="off">`}`).join("");
 function fillForm(x){FIELDS.forEach(([k,l,g])=>{$("#f_"+k).value=g(x)==null?"":g(x);});}
 fillForm(MINHA);
-$("#editbtn").addEventListener("click",()=>{fillForm(current||MINHA);$("#formbox").hidden=false;$("#fit").hidden=true;$("#hint").hidden=true;$("#empty").hidden=true;$("#formbox").scrollIntoView({behavior:"smooth"});});
+$("#editbtn").addEventListener("click",()=>{hideAll();fillForm(current||MINHA);$("#formbox").hidden=false;$("#fit").hidden=true;$("#hint").hidden=true;$("#empty").hidden=true;$("#formbox").scrollIntoView({behavior:"smooth"});});
 $("#gen").addEventListener("click",()=>{
   const v=k=>$("#f_"+k).value.trim()||"-";
   const d=JSON.parse(JSON.stringify(current||MINHA));
   d.numero=v("numero");d.dps=v("dps");d.serie=v("serie");d.competencia=v("competencia");d.emissao=v("emissao");d.chave=v("chave").replace(/\s/g,"");
   d.v.op=v("valor");d.v.liq=v("valor");d.s.desc=v("desc");
   d.t.nome=v("tnome");d.t.doc=v("tdoc");d.t.end=v("tend");d.t.mun=v("tmun");d.t.cep=v("tcep");d.t.email=v("temail");d.info=v("info");
-  current=d;render(d);say("Nota gerada. Toque em Baixar PDF.");window.scrollTo({top:0,behavior:"smooth"});
+  current=d;render(d);say("Nota gerada. Toque em Baixar PDF.");saveNote(d);window.scrollTo({top:0,behavior:"smooth"});
 });
-$("#cancel").addEventListener("click",()=>{current=null;$("#paper").innerHTML="";$("#fit").hidden=true;$("#hint").hidden=true;$("#empty").hidden=false;$("#formbox").hidden=false;$("#dl").disabled=true;fillForm(MINHA);say("");window.scrollTo({top:0});});
+
+/* ===== Banco de notas (local + GitHub) ===== */
+const LS_NOTES="axion_nfse_notas", LS_CFG="axion_nfse_cfg";
+function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+let notes=[]; try{notes=JSON.parse(lsGet(LS_NOTES)||"[]");}catch(e){notes=[];}
+if(!Array.isArray(notes))notes=[];
+let ghSha=null;
+function cfg(){try{return JSON.parse(lsGet(LS_CFG)||"{}");}catch(e){return {};}}
+const b64enc=s=>btoa(unescape(encodeURIComponent(s)));
+const b64dec=s=>decodeURIComponent(escape(atob(s.replace(/\s/g,""))));
+function ghUrl(c){return "https://api.github.com/repos/"+c.repo+"/contents/"+(c.path||"notas.json");}
+function ghHead(c){return {"Authorization":"Bearer "+c.token,"Accept":"application/vnd.github+json"};}
+function ghErr(status){
+  if(status===401)return "token inválido ou expirado (401)";
+  if(status===403)return "token sem permissão (403)";
+  if(status===404)return "repositório não encontrado (404). Confira o nome e o acesso do token";
+  return "erro "+status;
+}
+function setSync(t){const s=$("#syncst");if(s)s.textContent=t;say(t,/^⚠️/.test(t));}
+function noteName(d){
+  const n=String(parseInt(d.numero,10)||d.numero).padStart(2,"0");
+  const m=String(d.emissao||"").match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  const dt=m?m[1]+m[2]+m[3]:"00000000";
+  const nome=String(d.t&&d.t.nome||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]/g,"").toUpperCase().slice(0,10);
+  return n+"-"+dt+"-"+(nome||"SEMNOME");
+}
+async function ghLoad(){
+  const c=cfg(); if(!c.repo||!c.token)return false;
+  const r=await fetch(ghUrl(c)+"?t="+Date.now(),{headers:ghHead(c),cache:"no-store"});
+  if(r.status===404){
+    // 404 pode ser arquivo novo OU repositório errado: confirma o repositório
+    const rr=await fetch("https://api.github.com/repos/"+c.repo,{headers:ghHead(c),cache:"no-store"});
+    if(!rr.ok)throw new Error(ghErr(rr.status));
+    ghSha=null;return true;
+  }
+  if(!r.ok)throw new Error(ghErr(r.status));
+  const j=await r.json(); ghSha=j.sha;
+  const arr=JSON.parse(b64dec(j.content)||"[]");
+  notes=Array.isArray(arr)?arr:[];
+  return true;
+}
+async function ghPush(msg){
+  const c=cfg();
+  const body={message:msg,content:b64enc(JSON.stringify(notes,null,1))};
+  if(ghSha)body.sha=ghSha;
+  const r=await fetch(ghUrl(c),{method:"PUT",headers:Object.assign({"Content-Type":"application/json"},ghHead(c)),body:JSON.stringify(body)});
+  if(r.status===409||r.status===422){const e=new Error("conflito");e.conflict=true;throw e;}
+  if(!r.ok)throw new Error(ghErr(r.status));
+  const j=await r.json(); ghSha=j.content.sha;
+}
+async function sync(mut,okMsg,commitMsg){
+  const c=cfg();
+  if(!(c.repo&&c.token)){
+    mut(notes); lsSet(LS_NOTES,JSON.stringify(notes));
+    setSync("💾 "+okMsg+" (somente neste aparelho). Toque em ⚙️ para guardar no GitHub.");
+    refreshList(); return;
+  }
+  for(let t=0;t<2;t++){
+    let applied=false;
+    try{
+      await ghLoad(); mut(notes); applied=true;
+      lsSet(LS_NOTES,JSON.stringify(notes));
+      await ghPush(commitMsg);
+      setSync("✅ "+okMsg+" no GitHub ("+c.repo+")");
+      refreshList(); return;
+    }catch(e){
+      if(e&&e.conflict&&t===0)continue;
+      if(!applied)mut(notes);
+      lsSet(LS_NOTES,JSON.stringify(notes));
+      setSync("⚠️ "+okMsg+" só neste aparelho. GitHub: "+(e&&e.message||e));
+      refreshList(); return;
+    }
+  }
+}
+async function saveNote(d){
+  const nm=noteName(d);const rec={id:nm,nome:nm,salvoEm:Date.now(),d:JSON.parse(JSON.stringify(d))};
+  setSync("Salvando "+rec.nome+"…");
+  await sync(arr=>{
+    const i=arr.findIndex(x=>x.nome===rec.nome);
+    if(i>=0)arr[i]=rec;else arr.unshift(rec);
+  },"Nota "+rec.nome+" salva","NFS-e "+rec.nome);
+}
+function hideAll(){["#empty","#formbox","#fit","#hint","#listbox","#cfgbox"].forEach(s=>{$(s).hidden=true;});}
+function refreshList(){
+  const box=$("#items"); if(!box)return;
+  const q=(($("#q")&&$("#q").value)||"").toLowerCase().trim();
+  const arr=notes.filter(n=>!q||(n.nome+" "+(n.d&&n.d.t&&n.d.t.nome||"")).toLowerCase().includes(q))
+                 .sort((a,b)=>String(b.nome).localeCompare(String(a.nome)));
+  box.innerHTML=arr.length?arr.map(n=>'<div class="item" data-id="'+esc(n.id)+'"><div><div class="nm">'+esc(n.nome)+'</div><div class="sb">'+esc(n.d.t.nome)+' · '+esc(n.d.v.op)+'</div></div><button class="x" data-del="'+esc(n.id)+'" aria-label="Excluir nota">🗑</button></div>').join("")
+    :'<div class="small" style="margin-top:12px">Nenhuma nota encontrada.</div>';
+}
+async function showList(){
+  hideAll(); $("#listbox").hidden=false; refreshList(); window.scrollTo({top:0});
+  const c=cfg();
+  if(c.repo&&c.token){
+    setSync("Sincronizando…");
+    try{await ghLoad();lsSet(LS_NOTES,JSON.stringify(notes));setSync("✅ Sincronizado com "+c.repo);}
+    catch(e){setSync("⚠️ Não sincronizou: "+(e&&e.message||e)+". Mostrando as notas deste aparelho.");}
+    refreshList();
+  }else setSync("💾 Notas guardadas só neste aparelho. Toque em ⚙️ para guardar no GitHub.");
+}
+$("#listbtn").addEventListener("click",showList);
+$("#q").addEventListener("input",refreshList);
+$("#items").addEventListener("click",async ev=>{
+  const del=ev.target.closest("[data-del]");
+  if(del){
+    ev.stopPropagation();
+    const id=del.getAttribute("data-del"); const n=notes.find(x=>x.id===id);
+    let ok=true; try{ok=confirm("Excluir a nota "+(n?n.nome:"")+"?");}catch(e){}
+    if(ok)await sync(arr=>{const i=arr.findIndex(x=>x.id===id);if(i>=0)arr.splice(i,1);},"Nota excluída","Excluir NFS-e "+(n?n.nome:""));
+    return;
+  }
+  const it=ev.target.closest(".item"); if(!it)return;
+  const n=notes.find(x=>x.id===it.getAttribute("data-id")); if(!n)return;
+  current=n.d; render(current); say("Nota "+n.nome+" aberta. Toque em Baixar PDF para imprimir de novo.");
+  window.scrollTo({top:0});
+});
+$("#cfgbtn").addEventListener("click",()=>{
+  hideAll(); const c=cfg();
+  $("#c_repo").value=c.repo||""; $("#c_token").value=c.token||""; $("#c_path").value=c.path||"notas.json";
+  $("#cfgbox").hidden=false; window.scrollTo({top:0});
+});
+$("#c_save").addEventListener("click",async()=>{
+  const c={repo:$("#c_repo").value.trim().replace(/^https?:\/\/github\.com\//,"").replace(/\/+$/,""),token:$("#c_token").value.trim(),path:$("#c_path").value.trim()||"notas.json"};
+  if(!/^[^\/\s]+\/[^\/\s]+$/.test(c.repo)||!c.token){say("Preencha o repositório no formato usuário/nome e o token.",true);return;}
+  lsSet(LS_CFG,JSON.stringify(c)); say("Testando conexão…");
+  try{
+    await ghLoad();
+    if(!ghSha){await ghPush("Criar banco de notas NFS-e");}
+    else lsSet(LS_NOTES,JSON.stringify(notes));
+    setSync("✅ Conectado a "+c.repo+". As próximas notas serão guardadas lá.");
+  }catch(e){setSync("⚠️ Não conectou: "+(e&&e.message||e));}
+});
+$("#c_clear").addEventListener("click",()=>{lsSet(LS_CFG,"{}");$("#c_token").value="";say("Configuração removida deste aparelho.");});
+$("#c_back").addEventListener("click",()=>{$("#cancel").click();});
+
+$("#cancel").addEventListener("click",()=>{current=null;$("#listbox").hidden=true;$("#cfgbox").hidden=true;$("#paper").innerHTML="";$("#fit").hidden=true;$("#hint").hidden=true;$("#empty").hidden=false;$("#formbox").hidden=false;$("#dl").disabled=true;fillForm(MINHA);say("");window.scrollTo({top:0});});
 
 $("#dl").addEventListener("click",async()=>{
   if(!current)return;
