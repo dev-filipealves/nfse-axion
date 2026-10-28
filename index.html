@@ -340,7 +340,7 @@ async function ghLoad(){
   }
   if(!r.ok)throw new Error(ghErr(r.status));
   const j=await r.json(); ghSha=j.sha;
-  const arr=JSON.parse(b64dec(j.content)||"[]");
+  let arr=[];const raw=b64dec(j.content||"").trim();if(raw){try{arr=JSON.parse(raw);}catch(e){throw new Error("o arquivo "+(c.path||"notas.json")+" não é um JSON válido. Apague-o no GitHub e tente de novo");}}
   notes=Array.isArray(arr)?arr:[];
   return true;
 }
@@ -430,9 +430,9 @@ $("#c_save").addEventListener("click",async()=>{
   if(!/^[^\/\s]+\/[^\/\s]+$/.test(c.repo)||!c.token){say("Preencha o repositório no formato usuário/nome e o token.",true);return;}
   lsSet(LS_CFG,JSON.stringify(c)); say("Testando conexão…");
   try{
-    await ghLoad();
-    if(!ghSha){await ghPush("Criar banco de notas NFS-e");}
-    else lsSet(LS_NOTES,JSON.stringify(notes));
+    const local=notes.slice();await ghLoad();let add=0;local.forEach(n=>{if(!notes.some(x=>x.nome===n.nome)){notes.push(n);add++;}});
+    if(!ghSha||add){await ghPush("Sincronizar notas NFS-e");}
+    lsSet(LS_NOTES,JSON.stringify(notes));
     setSync("✅ Conectado a "+c.repo+". As próximas notas serão guardadas lá.");
   }catch(e){setSync("⚠️ Não conectou: "+(e&&e.message||e));}
 });
