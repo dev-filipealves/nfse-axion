@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>AXION · Gerador de NFS-e personalizada</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bar">
+      <h1>
+        NFS-e personalizada · AXION<small
+          >Envie o PDF da nota e receba o layout com a sua marca</small
+        >
+      </h1>
+      <div class="corner">
+        <button class="btn sec" id="cancel">← Voltar</button>
+        <button class="btn sec" id="cfgbtn" aria-label="Configurar GitHub">
+          ⚙️
+        </button>
+      </div>
+      <div class="btns">
+        <button class="btn pickbtn" type="button">📄 Enviar NFS-e (PDF)</button>
+        <button class="btn sec" id="listbtn">📚 Minhas notas</button>
+        <button class="btn sec" id="repbtn">📊 Relatórios</button>
+        <button class="btn sec" id="dl" disabled>⬇️ Baixar PDF</button>
+      </div>
+    </div>
+    <div id="msg"></div>
+    <div id="empty">
+      <img id="logoEmpty" alt="Logo AXION" width="72" height="72" />
+      <p>
+        Toque em <b>Enviar NFS-e (PDF)</b> e escolha o DANFSe baixado do portal
+        nacional.<br />Os dados são lidos no seu aparelho, nada é enviado a
+        servidores.
+      </p>
+      <button class="btn pickbtn" type="button">📄 Enviar NFS-e (PDF)</button>
+    </div>
+    <div id="listbox" class="panel" hidden>
+      <h2>Minhas notas</h2>
+      <div class="small">
+        Toque numa nota para abrir e baixar o PDF de novo.
+      </div>
+      <div id="resumo"></div>
+      <input
+        id="q"
+        type="search"
+        placeholder="Buscar por número, data, cliente ou valor"
+        autocomplete="off"
+      />
+      <div class="chips" id="chips">
+        <button class="chip on" data-f="todas">Todas</button
+        ><button class="chip" data-f="receber">⏳ A receber</button
+        ><button class="chip" data-f="recebida">✅ Recebidas</button>
+      </div>
+      <div id="tot" class="small"></div>
+      <div id="items"></div>
+    </div>
+    <div id="cfgbox" class="panel" hidden>
+      <h2>Guardar notas no GitHub</h2>
+      <div class="small">
+        1) Crie um repositório <b>privado</b> só para os dados (ex.:
+        <b>nfse-dados</b>).<br />2) Em GitHub → Settings → Developer settings →
+        Fine-grained tokens, crie um token apenas para esse repositório, com
+        <b>Contents: Read and write</b>.<br />3) Crie uma <b>senha</b>. O token
+        é criptografado com ela (AES-256) e só abre neste aparelho, depois de
+        você digitar a senha. Se esquecer a senha, é só gerar outro token (não
+        há recuperação).
+      </div>
+      <label for="c_repo">Repositório (usuário/nome)</label
+      ><input
+        id="c_repo"
+        type="text"
+        placeholder="dev-filipealves/nfse-dados"
+        autocomplete="off"
+        autocapitalize="off"
+      />
+      <label for="c_token">Token</label
+      ><input
+        id="c_token"
+        type="password"
+        placeholder="github_pat_..."
+        autocomplete="off"
+      />
+      <label for="c_pass">Senha (mínimo 6 caracteres)</label
+      ><input id="c_pass" type="password" autocomplete="new-password" />
+      <label for="c_pass2">Repita a senha</label
+      ><input id="c_pass2" type="password" autocomplete="new-password" />
+      <label for="c_path">Arquivo do banco</label
+      ><input
+        id="c_path"
+        type="text"
+        placeholder="notas.json"
+        autocomplete="off"
+        autocapitalize="off"
+      />
+      <button class="btn" id="c_save" style="width: 100%">
+        💾 Salvar e testar
+      </button>
+      <button class="btn sec" id="c_clear" style="width: 100%">
+        Remover configuração
+      </button>
+      <button class="btn sec" id="c_back" style="width: 100%">Voltar</button>
+    </div>
+    <div id="repbox" class="panel" hidden>
+      <h2>Relatórios</h2>
+      <label for="r_per">Período</label>
+      <select id="r_per">
+        <option value="mes">Este mês</option>
+        <option value="mesant">Mês anterior</option>
+        <option value="ano">Este ano</option>
+        <option value="anoant">Ano anterior</option>
+        <option value="tudo">Todo o período</option>
+      </select>
+      <div id="r_out"></div>
+      <button class="btn" id="r_csv" style="width: 100%">
+        ⬇️ Baixar CSV (Excel)
+      </button>
+      <button class="btn sec" id="r_pdf" style="width: 100%">
+        ⬇️ Baixar PDF
+      </button>
+    </div>
+    <div id="pwmodal" class="modal" hidden>
+      <div class="panel" style="width: 100%; max-width: 380px">
+        <h2>🔒 Desbloquear</h2>
+        <div class="small" id="pwmsg"></div>
+        <input
+          id="pwin"
+          type="password"
+          autocomplete="current-password"
+          placeholder="Senha"
+        /><button class="btn" id="pwok" style="width: 100%">Desbloquear</button
+        ><button class="btn sec" id="pwcancel" style="width: 100%">
+          Cancelar
+        </button>
+      </div>
+    </div>
+    <div id="fit" hidden><div id="paper"></div></div>
+    <div class="hint" id="hint" hidden>
+      Dica: toque em qualquer campo da nota para corrigir um texto antes de
+      baixar.
+    </div>
+    <!-- Bibliotecas externas (versões fixas): leitura de PDF, QR Code e geração de PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Código da aplicação -->
+    <script src="logo.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
