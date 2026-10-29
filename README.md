@@ -8,10 +8,6 @@ Ferramenta web que transforma o PDF da NFS-e (DANFSe) emitido no portal nacional
 
 Funciona direto no navegador do celular ou do computador, sem servidor próprio e sem instalação.
 
-🌐 **Acesse:** https://dev-filipealves.github.io/nfse-axion/
-
----
-
 ## 📑 Sumário
 
 - [✨ O que a ferramenta faz](#-o-que-a-ferramenta-faz)
