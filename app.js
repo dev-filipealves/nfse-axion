@@ -8,6 +8,7 @@
  *  - controla recebimentos, relatórios e o limite anual do MEI;
  *  - protege o token do GitHub com senha (AES-256-GCM + PBKDF2).
  */
+
 "use strict";
 
 window.addEventListener("error", function (e) {
