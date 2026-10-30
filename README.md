@@ -8,6 +8,10 @@ Ferramenta web que transforma o PDF da NFS-e (DANFSe) emitido no portal nacional
 
 Funciona direto no navegador do celular ou do computador, sem servidor próprio e sem instalação.
 
+🌐 **Acesse:** https://dev-filipealves.github.io/nfse-axion/
+
+---
+
 ## 📑 Sumário
 
 - [✨ O que a ferramenta faz](#-o-que-a-ferramenta-faz)
@@ -33,6 +37,8 @@ Funciona direto no navegador do celular ou do computador, sem servidor próprio 
 ### 💾 Banco de notas
 - 💾 Cada nota enviada é salva automaticamente com o nome `número-DDMMAAAA-CLIENTE` (cliente cortado em 10 letras). Exemplo: `01-26102026-OUTSIDEVEI`.
 - ☁ Notas guardadas neste aparelho ou em um **repositório privado do GitHub**, que funciona como banco de dados (arquivo `notas.json`).
+- 🕒 **Indicador de última sincronização** no rodapé, com data e horário. Se a sincronização falhar, o aviso fica amarelo e mostra a última que deu certo.
+- 🏷 **Versão automática** no rodapé (`1.0.N`), calculada a partir dos envios feitos ao repositório.
 - Tela **📚 Minhas notas** com busca por número, data, cliente ou **valor**.
 - 🔁 Qualquer nota pode ser reaberta e baixada em PDF novamente.
 - 🧩 Notas com o mesmo número, data e cliente são atualizadas, sem duplicar.
@@ -76,7 +82,8 @@ A ferramenta foi pensada para que dados de clientes e credenciais **não fiquem 
 | 🧹 **Cache local** | Com a senha ativa, as notas **não ficam guardadas no navegador**, apenas no repositório privado. |
 | 🎯 **Escopo do token** | Recomenda-se um *fine-grained token* limitado ao repositório do banco, com permissão **Contents: Read and write** e validade definida. Em caso de perda do aparelho, basta apagar o token no GitHub. |
 | 📡 **Comunicação** | Todo o tráfego com o GitHub usa HTTPS e vai diretamente do navegador para `api.github.com`. |
-| 📦 **Bibliotecas externas** | Carregadas com **versões fixas** (sem `latest`). |
+| 📦 **Bibliotecas externas** | Carregadas do jsDelivr com **versão fixa** e **Subresource Integrity (SRI, SHA-384)**: se o arquivo for adulterado no servidor, o navegador **bloqueia** o carregamento. |
+| 🛡 **Content Security Policy (CSP)** | O `index.html` define uma política que só permite scripts do próprio site e do jsDelivr, conexões apenas com o próprio site e com `api.github.com`, e bloqueia objetos, formulários e a alteração do endereço-base da página. |
 
 ### ✅ Boas práticas recomendadas
 - 🔐 Use uma senha de **8 caracteres ou mais**, sem datas ou nomes.
@@ -94,14 +101,14 @@ A ferramenta foi pensada para que dados de clientes e credenciais **não fiquem 
 - ➕ **Totais:** consideram apenas as notas salvas na ferramenta.
 - 🔑 **Senha sem recuperação:** quem esquecer a senha precisa gerar um novo token no GitHub e configurar de novo. As notas continuam no repositório.
 - 🌐 **Cada navegador tem a sua configuração:** ao trocar de aparelho ou de navegador, é preciso configurar o GitHub novamente.
-- 📶 **Dependência de bibliotecas externas:** a leitura de PDF, o QR Code e a geração de PDF dependem de arquivos carregados de um CDN público (cdnjs), então é necessário ter internet.
+- 📶 **Dependência de bibliotecas externas:** a leitura de PDF, o QR Code e a geração de PDF dependem de arquivos carregados de um CDN público (jsDelivr), então é necessário ter internet.
 - 📄 A leitura do PDF depende do padrão atual do DANFSe v2.0. Se o layout oficial mudar, a leitura pode precisar de ajuste.
 
 ---
 
 ## 🌐 Como publicar o seu próprio site
 
-1. Crie um repositório e envie os 4 arquivos na raiz: `index.html`, `styles.css`, `app.js` e `logo.js`.
+1. Crie um repositório e envie os 5 arquivos na raiz: `index.html`, `styles.css`, `app.js`, `logo.js` e `version.js`.
 2. No repositório, abra **Settings → Pages**.
 3. Em **Source**, escolha **Deploy from a branch**, a branch `main` e a pasta `/ (root)`, e salve.
 4. Aguarde cerca de 1 a 2 minutos. O site fica em `https://SEU-USUARIO.github.io/NOME-DO-REPOSITORIO/`.
@@ -134,7 +141,8 @@ O arquivo `notas.json` e a pasta `pdfs/` são criados automaticamente.
 ├── index.html   # estrutura da página
 ├── styles.css   # identidade visual e layout (com tema claro e escuro)
 ├── app.js       # lógica da aplicação (comentada)
-└── logo.js      # logo da AXION embutida
+├── logo.js      # logo da AXION embutida
+└── version.js   # versão automática do rodapé (1.0.N)
 ```
 
 ---
@@ -147,6 +155,7 @@ O arquivo `notas.json` e a pasta `pdfs/` são criados automaticamente.
 - 🖨 [html2canvas](https://html2canvas.hertzen.com/) 1.4.1 e [jsPDF](https://github.com/parallax/jsPDF) 2.5.1: geração dos PDFs.
 - 🔐 Web Crypto API (PBKDF2 e AES-GCM): proteção do token.
 - 🐙 API de conteúdo do GitHub: banco de notas e armazenamento dos PDFs originais.
+- 🔏 CSP e SRI para controlar o que o navegador executa.
 - ✨ Código formatado com [Prettier](https://prettier.io/).
 
 ---
