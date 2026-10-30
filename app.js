@@ -8,7 +8,6 @@
  *  - controla recebimentos, relatórios e o limite anual do MEI;
  *  - protege o token do GitHub com senha (AES-256-GCM + PBKDF2).
  */
-
 "use strict";
 
 window.addEventListener("error", function (e) {
@@ -53,9 +52,11 @@ window.addEventListener("error", function (e) {
   /** Lê a 1ª página do PDF e devolve a lista de textos, na ordem em que aparecem. */
   async function extract(file) {
     pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-    const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() })
-      .promise;
+      "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+    const pdf = await pdfjsLib.getDocument({
+      data: await file.arrayBuffer(),
+      isEvalSupported: false, // compatível com a política de segurança (CSP)
+    }).promise;
     const page = await pdf.getPage(1);
     const tc = await page.getTextContent();
     return tc.items.map((i) => i.str.trim()).filter(Boolean);
@@ -491,6 +492,45 @@ window.addEventListener("error", function (e) {
     if (s) s.textContent = t;
     say(t, /^⚠️/.test(t));
   }
+
+  /* ---------- Indicador de última sincronização (rodapé) ---------- */
+  const LS_LASTSYNC = "axion_nfse_lastsync";
+  /** Formata um instante como dd/mm/aaaa hh:mm. */
+  function fmtDataHora(ts) {
+    const d = new Date(ts);
+    return (
+      d.toLocaleDateString("pt-BR") +
+      " " +
+      d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+    );
+  }
+  /** Atualiza o texto do rodapé com a situação da sincronização. */
+  function updateSyncLabel(falhou) {
+    const el = document.getElementById("lastSync");
+    if (!el) return;
+    let conf = {};
+    try {
+      conf = JSON.parse(lsGet(LS_CFG) || "{}");
+    } catch (e) {}
+    const ult = parseInt(lsGet(LS_LASTSYNC) || "0", 10);
+    el.classList.toggle("warn", !!falhou);
+    if (!conf.repo) {
+      el.textContent = "☁ Somente neste aparelho";
+    } else if (falhou) {
+      el.textContent =
+        "⚠️ Falha ao sincronizar" +
+        (ult ? " · última: " + fmtDataHora(ult) : "");
+    } else {
+      el.textContent = ult
+        ? "☁ Última sincronização: " + fmtDataHora(ult)
+        : "☁ Ainda não sincronizado";
+    }
+  }
+  /** Registra o resultado de uma sincronização com o GitHub. */
+  function markSync(ok) {
+    if (ok) lsSet(LS_LASTSYNC, String(Date.now()));
+    updateSyncLabel(!ok);
+  }
   /** Gera o nome da nota: número-DDMMAAAA-CLIENTE (10 letras). */
   function noteName(d) {
     const n = String(parseInt(d.numero, 10) || d.numero).padStart(2, "0");
@@ -592,12 +632,14 @@ window.addEventListener("error", function (e) {
         persist();
         await ghPush(commitMsg);
         setSync("✅ " + okMsg + " no GitHub (" + c.repo + ")");
+        markSync(true);
         refreshList();
         return;
       } catch (e) {
         if (e && e.conflict && t === 0) continue;
         if (!applied) mut(notes);
         persist();
+        markSync(false);
         setSync(
           isProt()
             ? "⚠️ Não salvou no GitHub: " +
@@ -1127,7 +1169,9 @@ window.addEventListener("error", function (e) {
         await ghLoad();
         persist();
         setSync("✅ Sincronizado com " + c.repo);
+        markSync(true);
       } catch (e) {
+        markSync(false);
         setSync(
           "⚠️ Não sincronizou: " +
             ((e && e.message) || e) +
@@ -1289,16 +1333,19 @@ window.addEventListener("error", function (e) {
       }
       persist();
       setSync("✅ Conectado a " + repo + ". Token protegido por senha.");
+      markSync(true);
       $("#c_token").value = "";
       $("#c_pass").value = "";
       $("#c_pass2").value = "";
     } catch (e) {
+      markSync(false);
       setSync("⚠️ Não conectou: " + ((e && e.message) || e));
     }
   });
   $("#c_clear").addEventListener("click", () => {
     sessionToken = null;
     lsSet(LS_CFG, "{}");
+    updateSyncLabel();
     $("#c_token").value = "";
     say("Configuração removida deste aparelho.");
   });
@@ -1380,4 +1427,20 @@ window.addEventListener("error", function (e) {
       btn.disabled = false;
     }
   });
+
+  /* ---------- Inicialização ---------- */
+  updateSyncLabel();
+  // Avisa se alguma biblioteca externa não carregou (internet ou bloqueio de segurança)
+  const faltando = [];
+  if (typeof pdfjsLib === "undefined") faltando.push("leitor de PDF");
+  if (typeof qrcode === "undefined") faltando.push("QR Code");
+  if (typeof html2canvas === "undefined") faltando.push("imagem da nota");
+  if (!window.jspdf) faltando.push("gerador de PDF");
+  if (faltando.length)
+    say(
+      "⚠️ Não carregou: " +
+        faltando.join(", ") +
+        ". Verifique a internet e recarregue a página.",
+      true,
+    );
 })();
