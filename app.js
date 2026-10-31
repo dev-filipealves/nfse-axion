@@ -235,6 +235,7 @@ window.addEventListener("error", function (e) {
     $("#fit").hidden = false;
     $("#hint").hidden = false;
     $("#dl").disabled = false;
+    $("#sharebtn").disabled = false;
     fit();
   }
   /** Ajusta a escala da nota para caber na largura da tela. */
@@ -725,6 +726,7 @@ window.addEventListener("error", function (e) {
       salvoEm: Date.now(),
       status: "receber",
       pagoEm: "",
+      obs: "",
       pdf: "",
       d: JSON.parse(JSON.stringify(d)),
     };
@@ -745,6 +747,7 @@ window.addEventListener("error", function (e) {
           arr[i] = Object.assign({}, rec, {
             status: o.status || "receber",
             pagoEm: o.pagoEm || "",
+            obs: o.obs || "",
             pdf: rec.pdf || o.pdf || "",
           });
         } else arr.unshift(rec);
@@ -766,6 +769,17 @@ window.addEventListener("error", function (e) {
   function brl(n) {
     return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   }
+  /** Uma nota cancelada fica no histórico, mas não entra em totais, limite e relatórios. */
+  function ativa(n) {
+    return n.status !== "cancelada";
+  }
+  /** Dias desde a emissão da nota (0 se a data for inválida). */
+  function diasDesde(n) {
+    const x = ndate(n);
+    if (!x) return 0;
+    const t = new Date(x.y, x.m - 1, x.d).getTime();
+    return Math.max(0, Math.floor((Date.now() - t) / 86400000));
+  }
   /** Converte "R$ 1.466,67" em número. */
   function toNum(s) {
     const m = String(s || "").match(/[\d.]+,\d{2}|\d+/);
@@ -782,6 +796,7 @@ window.addEventListener("error", function (e) {
     let tm = 0,
       ta = 0;
     notes.forEach((n) => {
+      if (!ativa(n)) return;
       const m = String((n.d && n.d.emissao) || "").match(
         /(\d{2})\/(\d{2})\/(\d{4})/,
       );
@@ -812,7 +827,7 @@ window.addEventListener("error", function (e) {
       ano +
       ": <b>" +
       brl(ta) +
-      "</b></span></div>" +
+      "</b></div>" +
       '<div class="bar2"><i style="width:' +
       pct.toFixed(1) +
       "%;background:" +
@@ -839,6 +854,73 @@ window.addEventListener("error", function (e) {
     );
     return m ? { d: +m[1], m: +m[2], y: +m[3] } : null;
   }
+  /** HTML de uma nota na lista: status, cobrança, observação, cancelamento e PDF. */
+  function itemHtml(n) {
+    const st = n.status || "receber",
+      id = esc(n.id),
+      dias = diasDesde(n);
+    let badges;
+    if (st === "cancelada") {
+      badges = '<span class="badge off">🚫 Cancelada</span>';
+    } else if (st === "recebida") {
+      badges =
+        '<button class="badge ok" data-st="' +
+        id +
+        '">✅ Recebida' +
+        (n.pagoEm ? " em " + esc(n.pagoEm) : "") +
+        "</button>";
+    } else {
+      badges =
+        '<button class="badge ' +
+        (dias > 30 ? "late" : "wait") +
+        '" data-st="' +
+        id +
+        '">⏳ A receber · ' +
+        dias +
+        (dias === 1 ? " dia" : " dias") +
+        "</button>" +
+        '<button class="badge" data-cobrar="' +
+        id +
+        '">💬 Cobrar</button>';
+    }
+    return (
+      '<div class="item' +
+      (st === "cancelada" ? " cancel" : "") +
+      '" data-id="' +
+      id +
+      '">' +
+      '<div style="flex:1;min-width:0"><div class="nm">' +
+      esc(n.nome) +
+      "</div>" +
+      '<div class="sb">' +
+      esc(n.d.t.nome) +
+      " · " +
+      esc(n.d.v.op) +
+      "</div>" +
+      (n.obs ? '<div class="obs">📝 ' + esc(n.obs) + "</div>" : "") +
+      '<div class="acts">' +
+      badges +
+      '<button class="badge" data-obs="' +
+      id +
+      '">📝 ' +
+      (n.obs ? "Editar obs." : "Observação") +
+      "</button>" +
+      '<button class="badge" data-cancel="' +
+      id +
+      '">' +
+      (st === "cancelada" ? "↩ Reativar" : "🚫 Cancelar") +
+      "</button>" +
+      (n.pdf
+        ? '<button class="badge" data-pdf="' +
+          esc(n.pdf) +
+          '">📎 PDF original</button>'
+        : "") +
+      "</div></div>" +
+      '<button class="x" data-del="' +
+      id +
+      '" aria-label="Excluir nota">🗑</button></div>'
+    );
+  }
   /** Redesenha a lista de notas conforme busca, filtro e totais. */
   function refreshList() {
     const box = $("#items");
@@ -859,6 +941,8 @@ window.addEventListener("error", function (e) {
           " " +
           ((n.d && n.d.t && n.d.t.nome) || "") +
           " " +
+          (n.obs || "") +
+          " " +
           val +
           " " +
           num +
@@ -873,46 +957,98 @@ window.addEventListener("error", function (e) {
         );
       })
       .sort((a, b) => String(b.nome).localeCompare(String(a.nome)));
+    const ativas = arr.filter(ativa);
     $("#tot").textContent =
       arr.length +
       " nota(s) · Total " +
-      brl(arr.reduce((a, n) => a + vOf(n), 0));
+      brl(ativas.reduce((s, n) => s + vOf(n), 0)) +
+      (arr.length > ativas.length ? " (canceladas ficam fora do total)" : "");
     box.innerHTML = arr.length
-      ? arr
-          .map((n) => {
-            const ok = n.status === "recebida";
-            return (
-              '<div class="item" data-id="' +
-              esc(n.id) +
-              '"><div style="flex:1;min-width:0"><div class="nm">' +
-              esc(n.nome) +
-              '</div><div class="sb">' +
-              esc(n.d.t.nome) +
-              " · " +
-              esc(n.d.v.op) +
-              "</div>" +
-              '<div class="acts"><button class="badge ' +
-              (ok ? "ok" : "wait") +
-              '" data-st="' +
-              esc(n.id) +
-              '">' +
-              (ok
-                ? "✅ Recebida" + (n.pagoEm ? " em " + esc(n.pagoEm) : "")
-                : "⏳ A receber") +
-              "</button>" +
-              (n.pdf
-                ? '<button class="badge" data-pdf="' +
-                  esc(n.pdf) +
-                  '">📎 PDF original</button>'
-                : "") +
-              "</div></div>" +
-              '<button class="x" data-del="' +
-              esc(n.id) +
-              '" aria-label="Excluir nota">🗑</button></div>'
-            );
-          })
-          .join("")
+      ? arr.map(itemHtml).join("")
       : '<div class="small" style="margin-top:12px">Nenhuma nota encontrada.</div>';
+  }
+  /** Janela de texto: mostra um campo editável e botões; devolve { acao, texto }. */
+  function askText(o) {
+    return new Promise((res) => {
+      const m = $("#txmodal"),
+        t = $("#txin"),
+        b = $("#txbtns");
+      $("#txtitle").textContent = o.titulo || "";
+      t.value = o.texto || "";
+      t.placeholder = o.placeholder || "";
+      b.innerHTML = (o.botoes || [])
+        .map(
+          (x) =>
+            '<button class="btn' +
+            (x.sec ? " sec" : "") +
+            '" data-a="' +
+            x.id +
+            '" style="width:100%">' +
+            x.rotulo +
+            "</button>",
+        )
+        .join("");
+      m.hidden = false;
+      setTimeout(() => t.focus(), 50);
+      b.onclick = (ev) => {
+        const bt = ev.target.closest("[data-a]");
+        if (!bt) return;
+        m.hidden = true;
+        b.onclick = null;
+        res({ acao: bt.getAttribute("data-a"), texto: t.value });
+      };
+    });
+  }
+  /** Abre um link (WhatsApp, e-mail) em outra aba. */
+  function abrir(url) {
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+  /** Monta uma mensagem de cobrança editável e abre o WhatsApp ou o e-mail. */
+  async function cobrar(id) {
+    const n = notes.find((x) => x.id === id);
+    if (!n) return;
+    const d = n.d,
+      data = String(d.emissao || "").slice(0, 10);
+    const msg =
+      "Olá! Segue a NFS-e nº " +
+      d.numero +
+      " (emitida em " +
+      data +
+      "), no valor de " +
+      d.v.op +
+      ", referente a: " +
+      String((d.s && d.s.desc) || "serviço prestado").slice(0, 120) +
+      ".\nFico no aguardo da confirmação do pagamento. Obrigado!\n\nAXION | Sistemas Embarcados e Energia";
+    const r = await askText({
+      titulo: "💬 Cobrar · " + n.nome,
+      texto: msg,
+      botoes: [
+        { id: "wpp", rotulo: "WhatsApp" },
+        { id: "email", rotulo: "E-mail" },
+        { id: "cancelar", rotulo: "Cancelar", sec: true },
+      ],
+    });
+    if (r.acao === "wpp") {
+      const tel = String((d.t && d.t.tel) || "").replace(/\D/g, "");
+      const num = tel.length >= 10 ? (tel.length <= 11 ? "55" + tel : tel) : "";
+      abrir("https://wa.me/" + num + "?text=" + encodeURIComponent(r.texto));
+    } else if (r.acao === "email") {
+      const em = d.t && d.t.email && d.t.email !== "-" ? d.t.email : "";
+      abrir(
+        "mailto:" +
+          em +
+          "?subject=" +
+          encodeURIComponent("NFS-e nº " + d.numero + " — AXION") +
+          "&body=" +
+          encodeURIComponent(r.texto),
+      );
+    }
   }
   $("#chips").addEventListener("click", (ev) => {
     const b = ev.target.closest("[data-f]");
@@ -924,7 +1060,7 @@ window.addEventListener("error", function (e) {
     refreshList();
   });
   /* ----- Relatórios ----- */
-  /** Define o período escolhido no relatório. */
+  /** Define o período escolhido no relatório (y = ano de referência do gráfico). */
   function repRange() {
     const v = $("#r_per").value,
       now = new Date(),
@@ -935,6 +1071,7 @@ window.addEventListener("error", function (e) {
       return {
         t: "Mês " + pad(m) + "/" + y,
         s: pad(m) + "-" + y,
+        y: y,
         f: (x) => x.y === y && x.m === m,
       };
     if (v === "mesant") {
@@ -943,24 +1080,33 @@ window.addEventListener("error", function (e) {
       return {
         t: "Mês " + pad(pm) + "/" + py,
         s: pad(pm) + "-" + py,
+        y: py,
         f: (x) => x.y === py && x.m === pm,
       };
     }
-    if (v === "ano") return { t: "Ano " + y, s: "" + y, f: (x) => x.y === y };
+    if (v === "ano")
+      return { t: "Ano " + y, s: "" + y, y: y, f: (x) => x.y === y };
     if (v === "anoant")
-      return { t: "Ano " + (y - 1), s: "" + (y - 1), f: (x) => x.y === y - 1 };
-    return { t: "Todo o período", s: "completo", f: () => true };
+      return {
+        t: "Ano " + (y - 1),
+        s: "" + (y - 1),
+        y: y - 1,
+        f: (x) => x.y === y - 1,
+      };
+    return { t: "Todo o período", s: "completo", y: y, f: () => true };
   }
-  /** Calcula totais, recebido, a receber e resumo por cliente do período. */
+  /** Calcula totais, recebido, a receber, resumo por cliente e faturamento mensal. */
   function repData() {
     const R = repRange();
-    const arr = notes
+    const todas = notes
       .filter((n) => {
         const x = ndate(n);
         return x && R.f(x);
       })
       .sort((a, b) => String(a.nome).localeCompare(String(b.nome)));
-    const sum = (l) => l.reduce((a, n) => a + vOf(n), 0),
+    const arr = todas.filter(ativa),
+      canc = todas.filter((n) => !ativa(n));
+    const sum = (l) => l.reduce((s, n) => s + vOf(n), 0),
       cl = {};
     arr.forEach((n) => {
       const k = (n.d.t && n.d.t.nome) || "-";
@@ -970,14 +1116,106 @@ window.addEventListener("error", function (e) {
     });
     const tot = sum(arr),
       rec = sum(arr.filter((n) => n.status === "recebida"));
+    const meses = Array(12).fill(0);
+    notes.filter(ativa).forEach((n) => {
+      const x = ndate(n);
+      if (x && x.y === R.y) meses[x.m - 1] += vOf(n);
+    });
     return {
       R: R,
       arr: arr,
+      canc: canc,
+      todas: todas,
       tot: tot,
       rec: rec,
       pen: tot - rec,
+      meses: meses,
       cli: Object.values(cl).sort((a, b) => b.v - a.v),
     };
+  }
+  /** Gráfico de barras do faturamento mês a mês (SVG) e projeção do ano. */
+  function chartHtml(D) {
+    const y = D.R.y,
+      hoje = new Date(),
+      atual = hoje.getFullYear() === y;
+    const totalAno = D.meses.reduce((s, v) => s + v, 0);
+    const maxV = Math.max.apply(null, D.meses.concat([1])),
+      W = 340,
+      H = 120,
+      bw = 20,
+      gap = (W - 12 * bw) / 13;
+    const letras = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+    let barras = "";
+    D.meses.forEach((v, i) => {
+      const h = Math.round((v / maxV) * 90),
+        x = gap + i * (bw + gap);
+      barras +=
+        '<rect x="' +
+        x.toFixed(1) +
+        '" y="' +
+        (100 - h) +
+        '" width="' +
+        bw +
+        '" height="' +
+        h +
+        '" rx="3"></rect>' +
+        '<text x="' +
+        (x + bw / 2).toFixed(1) +
+        '" y="114">' +
+        letras[i] +
+        "</text>";
+    });
+    let proj;
+    if (atual) {
+      const passados = hoje.getMonth() + 1,
+        media = totalAno / passados,
+        estim = media * 12,
+        rest = 12 - passados;
+      proj =
+        '<div class="proj">📈 No ritmo atual (média de <b>' +
+        brl(media) +
+        "</b>/mês), você fecha " +
+        y +
+        " com cerca de <b>" +
+        brl(estim) +
+        "</b> (" +
+        ((estim / LIMITE_MEI) * 100).toFixed(0) +
+        "% do limite do MEI)." +
+        (estim > LIMITE_MEI
+          ? " ⚠️ A projeção passa do limite de " + brl(LIMITE_MEI) + "."
+          : "") +
+        "</div>";
+      if (rest > 0)
+        proj +=
+          '<div class="proj">🎯 Para ficar no limite, dá para faturar em média <b>' +
+          brl(Math.max(0, (LIMITE_MEI - totalAno) / rest)) +
+          "</b>/mês nos " +
+          rest +
+          " meses restantes.</div>";
+      proj +=
+        '<div class="small">Estimativa simples: média dos meses já decorridos × 12.</div>';
+    } else {
+      proj =
+        '<div class="proj">Total de ' +
+        y +
+        ": <b>" +
+        brl(totalAno) +
+        "</b> (" +
+        ((totalAno / LIMITE_MEI) * 100).toFixed(0) +
+        "% do limite).</div>";
+    }
+    return (
+      '<div class="sect">Faturamento por mês · ' +
+      y +
+      '</div><svg class="bars" viewBox="0 0 ' +
+      W +
+      " " +
+      H +
+      '" role="img" aria-label="Faturamento por mês">' +
+      barras +
+      "</svg>" +
+      proj
+    );
   }
   /** Desenha o relatório na tela. */
   function renderRep() {
@@ -999,6 +1237,12 @@ window.addEventListener("error", function (e) {
       '<div class="row"><span>⏳ A receber</span><b>' +
       brl(D.pen) +
       "</b></div>" +
+      (D.canc.length
+        ? '<div class="row"><span>🚫 Canceladas (fora dos totais)</span><b>' +
+          D.canc.length +
+          "</b></div>"
+        : "") +
+      chartHtml(D) +
       '<div class="sect">Por cliente</div>' +
       (D.cli
         .map(
@@ -1015,13 +1259,20 @@ window.addEventListener("error", function (e) {
         )
         .join("") || '<div class="small">Sem notas no período.</div>') +
       '<div class="sect">Notas do período</div>' +
-      (D.arr
+      (D.todas
         .map(
           (n) =>
             '<div class="row"><span>' +
             esc(n.nome) +
+            (n.obs
+              ? '<br><span class="small">📝 ' + esc(n.obs) + "</span>"
+              : "") +
             "</span><b>" +
-            (n.status === "recebida" ? "✅ " : "⏳ ") +
+            (n.status === "cancelada"
+              ? "🚫 "
+              : n.status === "recebida"
+                ? "✅ "
+                : "⏳ ") +
             brl(vOf(n)) +
             "</b></div>",
         )
@@ -1054,16 +1305,22 @@ window.addEventListener("error", function (e) {
         "Valor",
         "Status",
         "Recebido em",
+        "Observação",
       ],
     ].concat(
-      D.arr.map((n) => [
+      D.todas.map((n) => [
         n.nome,
         String(n.d.emissao || "").slice(0, 10),
         n.d.t.nome,
         n.d.t.doc,
         vOf(n).toFixed(2).replace(".", ","),
-        n.status === "recebida" ? "Recebida" : "A receber",
+        n.status === "cancelada"
+          ? "Cancelada"
+          : n.status === "recebida"
+            ? "Recebida"
+            : "A receber",
         n.pagoEm || "",
+        n.obs || "",
       ]),
     );
     try {
@@ -1212,6 +1469,69 @@ window.addEventListener("error", function (e) {
     if (pb) {
       ev.stopPropagation();
       await getPdf(pb.getAttribute("data-pdf"));
+      return;
+    }
+    const cn = ev.target.closest("[data-cancel]");
+    if (cn) {
+      ev.stopPropagation();
+      const id = cn.getAttribute("data-cancel"),
+        n = notes.find((x) => x.id === id);
+      if (!n) return;
+      const reativar = n.status === "cancelada";
+      let ok = true;
+      if (!reativar) {
+        try {
+          ok = confirm(
+            "Marcar a nota " +
+              n.nome +
+              " como cancelada? Ela sai dos totais e do limite do MEI.",
+          );
+        } catch (e) {}
+      }
+      if (ok)
+        await sync(
+          (arr) => {
+            const x = arr.find((y) => y.id === id);
+            if (x) {
+              x.status = reativar ? "receber" : "cancelada";
+              x.pagoEm = "";
+            }
+          },
+          reativar ? "Nota reativada" : "Nota cancelada",
+          (reativar ? "Reativar " : "Cancelar ") + id,
+        );
+      return;
+    }
+    const ob = ev.target.closest("[data-obs]");
+    if (ob) {
+      ev.stopPropagation();
+      const id = ob.getAttribute("data-obs"),
+        n = notes.find((x) => x.id === id);
+      if (!n) return;
+      const r = await askText({
+        titulo: "📝 Observação · " + n.nome,
+        texto: n.obs || "",
+        placeholder: "Ex.: cliente pediu desconto; pago em 2x",
+        botoes: [
+          { id: "salvar", rotulo: "Salvar" },
+          { id: "cancelar", rotulo: "Cancelar", sec: true },
+        ],
+      });
+      if (r.acao === "salvar")
+        await sync(
+          (arr) => {
+            const x = arr.find((y) => y.id === id);
+            if (x) x.obs = r.texto.trim();
+          },
+          "Observação salva",
+          "Observação " + id,
+        );
+      return;
+    }
+    const cb = ev.target.closest("[data-cobrar]");
+    if (cb) {
+      ev.stopPropagation();
+      await cobrar(cb.getAttribute("data-cobrar"));
       return;
     }
     const del = ev.target.closest("[data-del]");
@@ -1363,59 +1683,52 @@ window.addEventListener("error", function (e) {
     $("#hint").hidden = true;
     $("#empty").hidden = false;
     $("#dl").disabled = true;
+    $("#sharebtn").disabled = true;
     say("");
     window.scrollTo({ top: 0 });
   });
 
+  /** Nome do arquivo PDF da nota exibida na tela. */
+  function nomeArquivoNota() {
+    return "NFSe-" + String(current.numero).replace(/\W/g, "") + "-AXION.pdf";
+  }
+  /** Gera o PDF da nota exibida na tela e devolve o Blob. */
+  async function gerarPdfNota() {
+    const canvas = await html2canvas($("#paper"), {
+      scale: 2,
+      backgroundColor: "#ffffff",
+      useCORS: true,
+      onclone: (doc) => {
+        const p = doc.getElementById("paper");
+        p.style.transform = "none";
+        const w = doc.getElementById("fit");
+        w.style.height = "auto";
+        w.style.overflow = "visible";
+        w.style.padding = "0";
+        w.style.maxWidth = "none";
+      },
+    });
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit: "mm", format: "a4" });
+    const W = 210,
+      H = (canvas.height * W) / canvas.width;
+    pdf.addImage(
+      canvas.toDataURL("image/jpeg", 0.95),
+      "JPEG",
+      0,
+      0,
+      W,
+      Math.min(H, 297),
+    );
+    return pdf.output("blob");
+  }
   $("#dl").addEventListener("click", async () => {
     if (!current) return;
     const btn = $("#dl");
     btn.disabled = true;
     say("Gerando PDF…");
     try {
-      const canvas = await html2canvas($("#paper"), {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-        onclone: (doc) => {
-          const p = doc.getElementById("paper");
-          p.style.transform = "none";
-          const w = doc.getElementById("fit");
-          w.style.height = "auto";
-          w.style.overflow = "visible";
-          w.style.padding = "0";
-          w.style.maxWidth = "none";
-        },
-      });
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({ unit: "mm", format: "a4" });
-      const W = 210,
-        H = (canvas.height * W) / canvas.width;
-      pdf.addImage(
-        canvas.toDataURL("image/jpeg", 0.95),
-        "JPEG",
-        0,
-        0,
-        W,
-        Math.min(H, 297),
-      );
-      const blob = pdf.output("blob");
-      const fname =
-        "NFSe-" + String(current.numero).replace(/\W/g, "") + "-AXION.pdf";
-      if (!downloads) {
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = fname;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        say("PDF gerado.");
-        return;
-      }
-      await downloads.save({
-        filename: `NFSe-${String(current.numero).replace(/\W/g, "")}-AXION.pdf`,
-        data: blob,
-      });
+      await saveBlob(await gerarPdfNota(), nomeArquivoNota());
       say("PDF salvo.");
     } catch (err) {
       if (err && err.code === "declined") say("Download cancelado.");
@@ -1423,6 +1736,46 @@ window.addEventListener("error", function (e) {
         console.error(err);
         say("Erro ao gerar o PDF: " + (err.message || err.code || err), true);
       }
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  /** Compartilha o PDF da nota (WhatsApp, e-mail...) pelo menu do aparelho. */
+  $("#sharebtn").addEventListener("click", async () => {
+    if (!current) return;
+    const btn = $("#sharebtn");
+    btn.disabled = true;
+    say("Preparando o PDF para compartilhar…");
+    try {
+      const blob = await gerarPdfNota();
+      const file = new File([blob], nomeArquivoNota(), {
+        type: "application/pdf",
+      });
+      const texto =
+        "NFS-e nº " +
+        current.numero +
+        " · " +
+        current.v.op +
+        " · AXION | Sistemas Embarcados e Energia";
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "NFS-e nº " + current.numero,
+          text: texto,
+        });
+        say("Compartilhado.");
+      } else {
+        // Sem suporte a compartilhar arquivos: baixa o PDF e abre o WhatsApp com a mensagem
+        await saveBlob(blob, nomeArquivoNota());
+        say(
+          "Este navegador não compartilha arquivos. O PDF foi baixado: anexe-o na conversa.",
+          true,
+        );
+        abrir("https://wa.me/?text=" + encodeURIComponent(texto));
+      }
+    } catch (err) {
+      if (err && err.name === "AbortError") say("Compartilhamento cancelado.");
+      else say("Erro ao compartilhar: " + ((err && err.message) || err), true);
     } finally {
       btn.disabled = false;
     }

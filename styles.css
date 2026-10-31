@@ -543,3 +543,54 @@ body {
   color: var(--muted);
   font-size: 12px;
 }
+
+/* ---------- Cancelamento, observações, cobrança e gráfico ---------- */
+.badge.late {
+  border-color: #d23b3b;
+  color: #d23b3b;
+}
+.badge.off {
+  border-color: var(--line);
+  color: var(--muted);
+}
+.item.cancel .nm,
+.item.cancel .sb {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+.obs {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+  white-space: pre-wrap;
+}
+.proj {
+  font-size: 13px;
+  margin: 8px 0;
+  line-height: 1.4;
+}
+.bars {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.bars rect {
+  fill: var(--accent);
+}
+.bars text {
+  fill: var(--muted);
+  font-size: 9px;
+  text-anchor: middle;
+}
+#txmodal textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 15px;
+  background: transparent;
+  color: var(--fg);
+  font-family: inherit;
+  resize: vertical;
+}

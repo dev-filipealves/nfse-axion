@@ -71,6 +71,7 @@
         <button class="btn sec" id="listbtn">📚 Minhas notas</button>
         <button class="btn sec" id="repbtn">📊 Relatórios</button>
         <button class="btn sec" id="dl" disabled>⬇️ Baixar PDF</button>
+        <button class="btn sec" id="sharebtn" disabled>📤 Compartilhar</button>
       </div>
     </div>
     <div id="msg"></div>
@@ -99,6 +100,7 @@
         <button class="chip on" data-f="todas">Todas</button
         ><button class="chip" data-f="receber">⏳ A receber</button
         ><button class="chip" data-f="recebida">✅ Recebidas</button>
+        <button class="chip" data-f="cancelada">🚫 Canceladas</button>
       </div>
       <div id="tot" class="small"></div>
       <div id="items"></div>
@@ -166,6 +168,13 @@
       <button class="btn sec" id="r_pdf" style="width: 100%">
         ⬇️ Baixar PDF
       </button>
+    </div>
+    <div id="txmodal" class="modal" hidden>
+      <div class="panel" style="width: 100%; max-width: 420px">
+        <h2 id="txtitle"></h2>
+        <textarea id="txin" rows="6"></textarea>
+        <div id="txbtns"></div>
+      </div>
     </div>
     <div id="pwmodal" class="modal" hidden>
       <div class="panel" style="width: 100%; max-width: 380px">

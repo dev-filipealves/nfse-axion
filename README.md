@@ -33,6 +33,7 @@ Funciona direto no navegador do celular ou do computador, sem servidor próprio 
 - 🏷 Inclui o nome fantasia da empresa no bloco do prestador.
 - 📱 Gera um **QR Code que abre a consulta pública do portal nacional** já com a chave de acesso da nota.
 - 📄 Exporta a nota em **PDF** (A4).
+- 📤 **Compartilha o PDF** direto pelo menu do aparelho (WhatsApp, e-mail e outros). Em navegadores sem esse recurso, baixa o PDF e abre o WhatsApp com a mensagem pronta.
 
 ### 💾 Banco de notas
 - 💾 Cada nota enviada é salva automaticamente com o nome `número-DDMMAAAA-CLIENTE` (cliente cortado em 10 letras). Exemplo: `01-26102026-OUTSIDEVEI`.
@@ -46,10 +47,15 @@ Funciona direto no navegador do celular ou do computador, sem servidor próprio 
 
 ### 💰 Controle financeiro
 - ✅ **Status de recebimento:** cada nota fica como "A receber" ou "Recebida", com a data do recebimento.
+- ⏱ **Dias em aberto:** cada nota a receber mostra há quantos dias foi emitida e fica em vermelho depois de 30 dias.
+- 💬 **Cobrar o cliente:** mensagem pronta e editável (número da nota, data, valor e serviço), enviada por WhatsApp (usa o telefone da nota, quando houver) ou por e-mail (usa o e-mail do tomador).
+- 🚫 **Notas canceladas:** ficam no histórico, riscadas, mas **saem dos totais, do limite do MEI e dos relatórios**. Podem ser reativadas.
+- 📝 **Observações por nota** (ex.: "pago em 2x"), pesquisáveis e incluídas no relatório.
 - 🔎 **Filtros** por status e **total da busca** (soma das notas exibidas).
 - 📈 **Painel do limite anual do MEI:** faturamento do mês e do ano, com barra de progresso que muda de cor ao passar de 80% e de 100% do limite.
 
 ### 📊 Relatórios
+- 📈 **Gráfico de faturamento mês a mês** e **projeção do ano** (média dos meses decorridos × 12) comparada ao limite do MEI, com a média mensal que ainda cabe no limite.
 - 🗓 Período à escolha: este mês, mês anterior, este ano, ano anterior ou todo o período.
 - 🧮 Resumo com notas emitidas, total faturado, recebido e a receber.
 - 👥 **Resumo por cliente**, com quantidade de notas, valor e porcentagem do total.
@@ -98,7 +104,8 @@ A ferramenta foi pensada para que dados de clientes e credenciais **não fiquem 
 - ⚖ **Não substitui a NFS-e oficial.** A validade fiscal é do documento emitido no portal nacional. Esta ferramenta apenas gera uma apresentação personalizada. O rodapé da nota informa que a autenticidade deve ser conferida no portal pela chave de acesso.
 - 🔗 **QR Code de consulta:** usa o formato `https://www.nfse.gov.br/ConsultaPublica/?tpc=1&chave=…`, o mesmo adotado por bibliotecas que reproduzem o modelo oficial do DANFSe. Se o portal mudar o formato, o link pode precisar de ajuste.
 - 📉 **Limite do MEI:** o painel usa **R$ 81.000** por ano (valor vigente em 2026) e não faz o ajuste proporcional para quem abriu o MEI no meio do ano. O valor fica na constante `LIMITE_MEI`, no arquivo `app.js`, e deve ser atualizado se a lei mudar.
-- ➕ **Totais:** consideram apenas as notas salvas na ferramenta.
+- ➕ **Totais:** consideram apenas as notas salvas na ferramenta e ignoram as canceladas.
+- 📈 **Projeção do ano:** é uma estimativa simples (média dos meses já decorridos × 12) e não considera sazonalidade.
 - 🔑 **Senha sem recuperação:** quem esquecer a senha precisa gerar um novo token no GitHub e configurar de novo. As notas continuam no repositório.
 - 🌐 **Cada navegador tem a sua configuração:** ao trocar de aparelho ou de navegador, é preciso configurar o GitHub novamente.
 - 📶 **Dependência de bibliotecas externas:** a leitura de PDF, o QR Code e a geração de PDF dependem de arquivos carregados de um CDN público (jsDelivr), então é necessário ter internet.
