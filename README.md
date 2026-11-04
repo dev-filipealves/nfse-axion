@@ -61,6 +61,19 @@ Funciona direto no navegador do celular ou do computador, sem servidor próprio 
 - 👥 **Resumo por cliente**, com quantidade de notas, valor e porcentagem do total.
 - 📤 Exportação em **CSV** (abre no Excel, separador ponto e vírgula) e em **PDF**.
 
+### 💰 Financeiro (PJ e PF)
+- 🏢👤 Duas contas separadas: **PJ (empresa)** e **PF (pessoal)**.
+- 📅 Tudo organizado **por mês**: cada entrada ou despesa vai para o mês da sua data e os totais (entradas, despesas e saldo) são recalculados na hora. O seletor de mês marca o **mês atual** e tem atalho para voltar a ele.
+- ✏️ Cadastro, **edição e exclusão** de nome, valor, data e categoria de cada item.
+- ✅ Situação de cada item: **pago / a pagar** (despesas) e **recebido / a receber** (entradas), com o total pendente.
+- 🧾 **Integração com as notas:** ao marcar uma NFS-e como **Recebida**, o valor entra automaticamente nas entradas do PJ, no mês do recebimento. Ao desmarcar, sai do PJ.
+- 🔁 **Itens recorrentes** e botão para repetir no mês seguinte os recorrentes do mês anterior (como "a pagar").
+- 💡 **Dízimo 10%** (PF): calcula 10% das entradas do mês.
+- 🗂 **Despesas por categoria**, com porcentagem do total.
+- 📤 **Resumo para WhatsApp** (editável antes de enviar, com opção de copiar o texto).
+- ⬇️ Exportação do mês em **PDF** e em **tabela (CSV, abre no Excel)**.
+- 💾 Dados salvos no arquivo **`financeiro.json`**, no mesmo repositório privado das notas, com as mesmas proteções (token com senha, sem cache local quando protegido).
+
 ---
 
 ## 🚀 Como usar
@@ -138,7 +151,7 @@ A ferramenta foi pensada para que dados de clientes e credenciais **não fiquem 
    - uma senha e a confirmação.
 5. Toque em **Salvar e testar**. Quando aparecer a confirmação de conexão, as próximas notas já serão guardadas no repositório.
 
-O arquivo `notas.json` e a pasta `pdfs/` são criados automaticamente.
+Os arquivos `notas.json` e `financeiro.json` e a pasta `pdfs/` são criados automaticamente.
 
 ---
 

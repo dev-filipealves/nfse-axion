@@ -70,6 +70,7 @@
         <button class="btn pickbtn" type="button">📄 Enviar NFS-e (PDF)</button>
         <button class="btn sec" id="listbtn">📚 Minhas notas</button>
         <button class="btn sec" id="repbtn">📊 Relatórios</button>
+        <button class="btn sec" id="finbtn">💰 Financeiro</button>
         <button class="btn sec" id="dl" disabled>⬇️ Baixar PDF</button>
         <button class="btn sec" id="sharebtn" disabled>📤 Compartilhar</button>
       </div>
@@ -168,6 +169,71 @@
       <button class="btn sec" id="r_pdf" style="width: 100%">
         ⬇️ Baixar PDF
       </button>
+    </div>
+    <div id="finbox" class="panel" hidden>
+      <h2>💰 Financeiro</h2>
+      <div class="chips" id="f_tabs">
+        <button class="chip on" data-l="PJ">🏢 PJ (empresa)</button>
+        <button class="chip" data-l="PF">👤 PF (pessoal)</button>
+      </div>
+      <div class="mesnav">
+        <button class="btn sec" id="f_prev" aria-label="Mês anterior">‹</button>
+        <select id="f_mes" aria-label="Mês"></select>
+        <button class="btn sec" id="f_next" aria-label="Próximo mês">›</button>
+      </div>
+      <div id="f_cur" class="small"></div>
+      <div id="f_sum"></div>
+      <div class="finacts">
+        <button class="btn" id="f_add_e">➕ Entrada</button>
+        <button class="btn" id="f_add_d">➕ Despesa</button>
+      </div>
+      <div class="finacts">
+        <button class="btn sec" id="f_rep">🔁 Repetir recorrentes</button>
+        <button class="btn sec" id="f_diz">💡 Dízimo 10%</button>
+      </div>
+      <div id="f_lists"></div>
+      <div class="finacts">
+        <button class="btn sec" id="f_wpp">📤 WhatsApp</button>
+        <button class="btn sec" id="f_pdf">⬇️ PDF</button>
+        <button class="btn sec" id="f_csv">⬇️ Tabela (CSV)</button>
+      </div>
+    </div>
+    <div id="fmodal" class="modal" hidden>
+      <div
+        class="panel"
+        style="width: 100%; max-width: 420px; max-height: 92vh; overflow: auto"
+      >
+        <h2 id="ftitle"></h2>
+        <label for="fi_nome">Nome</label>
+        <input id="fi_nome" type="text" autocomplete="off" />
+        <label for="fi_valor">Valor (R$)</label>
+        <input
+          id="fi_valor"
+          type="text"
+          inputmode="decimal"
+          placeholder="0,00"
+          autocomplete="off"
+        />
+        <label for="fi_data">Data</label>
+        <input id="fi_data" type="date" />
+        <label for="fi_cat">Categoria</label>
+        <select id="fi_cat"></select>
+        <label class="chk"
+          ><input id="fi_pago" type="checkbox" /><span id="fi_pagolbl"></span
+        ></label>
+        <label class="chk"
+          ><input id="fi_rec" type="checkbox" />Repete todo mês
+          (recorrente)</label
+        >
+        <div id="fi_err" class="small" style="color: #d23b3b"></div>
+        <button class="btn" id="fi_save" style="width: 100%">Salvar</button>
+        <button class="btn sec" id="fi_del" style="width: 100%" hidden>
+          🗑 Excluir
+        </button>
+        <button class="btn sec" id="fi_cancel" style="width: 100%">
+          Cancelar
+        </button>
+      </div>
     </div>
     <div id="txmodal" class="modal" hidden>
       <div class="panel" style="width: 100%; max-width: 420px">
