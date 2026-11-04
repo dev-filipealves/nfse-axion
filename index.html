@@ -73,17 +73,126 @@
         <button class="btn sec" id="finbtn">💰 Financeiro</button>
         <button class="btn sec" id="dl" disabled>⬇️ Baixar PDF</button>
         <button class="btn sec" id="sharebtn" disabled>📤 Compartilhar</button>
+        <button class="btn sec" id="launchbtn" disabled>💸 Lançar</button>
       </div>
     </div>
     <div id="msg"></div>
     <div id="empty">
-      <img id="logoEmpty" alt="Logo AXION" width="72" height="72" />
-      <p>
-        Toque em <b>Enviar NFS-e (PDF)</b> e escolha o DANFSe baixado do portal
-        nacional.<br />Os dados são lidos no seu aparelho, nada é enviado a
-        servidores.
-      </p>
-      <button class="btn pickbtn" type="button">📄 Enviar NFS-e (PDF)</button>
+      <!-- Tela inicial: painel com quadrados -->
+      <header class="home-head">
+        <img id="logoEmpty" alt="Logo AXION" width="56" height="56" />
+        <div>
+          <div class="home-hi" id="homeHi">Olá!</div>
+          <div class="home-title">AXION</div>
+          <div class="home-sub">Sistemas Embarcados e Energia</div>
+        </div>
+      </header>
+
+      <button class="hero" data-go="notas" type="button">
+        <span class="hero-left">
+          <span class="hero-tag">VISÃO GERAL</span>
+          <span class="hero-main" id="hMes">R$ 0,00</span>
+          <span class="hero-sub" id="hSub">faturado no mês</span>
+          <span class="hero-go">📚 Minhas notas ›</span>
+        </span>
+        <span class="hero-right">
+          <span class="hero-pct" id="hPct">0%</span>
+          <span class="hero-cap">do limite anual do MEI</span>
+        </span>
+      </button>
+
+      <div class="home-sec">
+        <span>FERRAMENTAS</span><span class="home-pill">4</span>
+      </div>
+      <div class="tiles">
+        <button class="tile t-blue" data-go="nota" type="button">
+          <span class="ico">
+            <svg
+              viewBox="0 0 24 24"
+              width="26"
+              height="26"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path
+                d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"
+              />
+              <path d="M14 3v5h5" />
+              <path d="M12 12v6M9 15h6" />
+            </svg>
+          </span>
+          <span class="tt">Lançar nota</span>
+          <span class="ts">Enviar o PDF da NFS-e</span>
+        </button>
+        <button class="tile t-green" data-go="fin" type="button">
+          <span class="ico">
+            <svg
+              viewBox="0 0 24 24"
+              width="26"
+              height="26"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M3 7a2 2 0 0 1 2-2h12v4" />
+              <path
+                d="M3 7v11a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2z"
+              />
+              <circle cx="16.5" cy="14.5" r="1.2" />
+            </svg>
+          </span>
+          <span class="tt">Finanças</span>
+          <span class="ts">PJ e PF, mês a mês</span>
+        </button>
+        <button class="tile t-amber" data-go="rel" type="button">
+          <span class="ico">
+            <svg
+              viewBox="0 0 24 24"
+              width="26"
+              height="26"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M4 20h16" />
+              <path d="M7 20V11M12 20V5M17 20v-7" />
+            </svg>
+          </span>
+          <span class="tt">Relatórios</span>
+          <span class="ts">Mês, ano e limite do MEI</span>
+        </button>
+        <button class="tile t-slate" data-go="cfg" type="button">
+          <span class="ico">
+            <svg
+              viewBox="0 0 24 24"
+              width="26"
+              height="26"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M4 7h10M18 7h2M4 17h2M10 17h10" />
+              <circle cx="16" cy="7" r="2" />
+              <circle cx="8" cy="17" r="2" />
+            </svg>
+          </span>
+          <span class="tt">Configurações</span>
+          <span class="ts">GitHub e senha</span>
+        </button>
+      </div>
     </div>
     <div id="listbox" class="panel" hidden>
       <h2>Minhas notas</h2>

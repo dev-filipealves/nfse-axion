@@ -27,6 +27,11 @@ Funciona direto no navegador do celular ou do computador, sem servidor próprio 
 
 ## ✨ O que a ferramenta faz
 
+### 🏠 Tela inicial
+- Painel com quadrados: **Lançar nota**, **Finanças**, **Relatórios** e **Configurações**.
+- Cartão **Visão geral** com o faturamento do mês, o valor a receber e a porcentagem do limite anual do MEI. Tocar nele abre **Minhas notas**.
+- O botão **← Voltar** de qualquer tela leva de volta ao painel.
+
 ### 🧾 Nota personalizada
 - 📥 Lê o PDF do DANFSe (padrão nacional) e extrai os dados da nota.
 - 🎨 Monta a nota com o layout e a logo da AXION, mantendo as informações obrigatórias: identificação, chave de acesso, prestador, tomador, serviço, tributação, valores e informações complementares.
@@ -66,9 +71,10 @@ Funciona direto no navegador do celular ou do computador, sem servidor próprio 
 - 📅 Tudo organizado **por mês**: cada entrada ou despesa vai para o mês da sua data e os totais (entradas, despesas e saldo) são recalculados na hora. O seletor de mês marca o **mês atual** e tem atalho para voltar a ele.
 - ✏️ Cadastro, **edição e exclusão** de nome, valor, data e categoria de cada item.
 - ✅ Situação de cada item: **pago / a pagar** (despesas) e **recebido / a receber** (entradas), com o total pendente.
-- 🧾 **Integração com as notas:** ao marcar uma NFS-e como **Recebida**, o valor entra automaticamente nas entradas do PJ, no mês do recebimento. Ao desmarcar, sai do PJ.
+- 🧾 **Lançar notas no financeiro:** botão **💸 Lançar** em cada nota (na lista e na tela da nota). Um menu pergunta o destino (**PJ ou PF**) e se entra como **entrada** ou **despesa**. O lançamento é manual, e a mesma nota não é lançada duas vezes no mesmo destino.
+- 👤 **Replicar receita do PJ na PF:** ao lançar uma entrada no PJ, a ferramenta oferece copiá-la também para a pessoa física.
 - 🔁 **Itens recorrentes** e botão para repetir no mês seguinte os recorrentes do mês anterior (como "a pagar").
-- 💡 **Dízimo 10%** (PF): calcula 10% das entradas do mês.
+- 💡 **Dízimo 10%:** calcula 10% das entradas do mês na conta aberta (PJ ou PF).
 - 🗂 **Despesas por categoria**, com porcentagem do total.
 - 📤 **Resumo para WhatsApp** (editável antes de enviar, com opção de copiar o texto).
 - ⬇️ Exportação do mês em **PDF** e em **tabela (CSV, abre no Excel)**.

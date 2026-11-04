@@ -139,22 +139,8 @@ body {
 }
 #empty {
   max-width: 820px;
-  margin: 20px auto;
-  padding: 36px 20px;
-  text-align: center;
-  background: var(--card);
-  border: 2px dashed var(--line);
-  border-radius: 16px;
-}
-#empty img {
-  width: 72px;
-  height: 72px;
-  border-radius: 14px;
-}
-#empty p {
-  color: var(--muted);
-  margin: 10px 0 18px;
-  font-size: 14px;
+  margin: 0 auto;
+  padding: 18px 12px 8px;
 }
 #fit {
   margin: 0 auto;
@@ -694,4 +680,185 @@ body {
 }
 .panel label.chk input {
   width: auto;
+}
+
+/* ---------- Tela inicial (painel de quadrados) ---------- */
+/* Na tela inicial, o cabeçalho com botões fica escondido (os quadrados fazem esse papel) */
+body:has(#empty:not([hidden])) .bar {
+  display: none;
+}
+.home-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 4px 18px;
+}
+.home-head img {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 8px 24px rgba(47, 107, 255, 0.25);
+}
+.home-hi {
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  color: var(--accent);
+  text-transform: capitalize;
+}
+.home-title {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  line-height: 1.15;
+}
+.home-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+.hero {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid var(--accent);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(47, 107, 255, 0.22),
+      rgba(111, 160, 255, 0.06) 70%
+    ),
+    var(--card);
+  color: var(--fg);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.hero:active,
+.tile:active {
+  transform: scale(0.98);
+}
+.hero-left,
+.hero-right {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.hero-right {
+  align-items: flex-end;
+  text-align: right;
+}
+.hero-tag {
+  align-self: flex-start;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+.hero-main {
+  font-size: 24px;
+  font-weight: 800;
+  margin-top: 6px;
+}
+.hero-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+.hero-go {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-top: 6px;
+}
+.hero-pct {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--accent);
+}
+.hero-cap {
+  font-size: 11px;
+  color: var(--muted);
+  max-width: 90px;
+}
+.home-sec {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 22px 4px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+}
+.home-pill {
+  font-size: 12px;
+  color: var(--accent);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 12px;
+}
+.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 168px;
+  padding: 16px;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(160deg, rgba(47, 107, 255, 0.12), transparent 60%),
+    var(--card);
+  color: var(--fg);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tile .ico {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  margin-bottom: auto;
+  border: 1px solid transparent;
+}
+.tile .tt {
+  font-size: 17px;
+  font-weight: 700;
+}
+.tile .ts {
+  font-size: 12px;
+  color: var(--muted);
+}
+.t-blue .ico {
+  background: rgba(47, 107, 255, 0.18);
+  border-color: rgba(47, 107, 255, 0.55);
+  color: #6fa0ff;
+}
+.t-green .ico {
+  background: rgba(46, 158, 91, 0.16);
+  border-color: rgba(46, 158, 91, 0.5);
+  color: #2e9e5b;
+}
+.t-amber .ico {
+  background: rgba(224, 161, 0, 0.16);
+  border-color: rgba(224, 161, 0, 0.5);
+  color: #e0a100;
+}
+.t-slate .ico {
+  background: rgba(154, 166, 196, 0.16);
+  border-color: rgba(154, 166, 196, 0.45);
+  color: var(--muted);
 }
