@@ -72,3 +72,20 @@
       /* sem internet ou limite de consultas: mantém o que já está na tela */
     });
 })();
+
+/* Confere se o index.html, o app.js e o version.js são da mesma publicação */
+window.addEventListener("load", function () {
+  var ESPERADO = "2026-11-04.1";
+  if (window.AXION_BUILD === ESPERADO) return;
+  var m = document.getElementById("msg");
+  if (m) {
+    m.textContent =
+      "⚠️ Arquivos desatualizados: envie o app.js novo ao GitHub e recarregue a página (limpe o cache do navegador).";
+    m.className = "err";
+  }
+  var f = document.getElementById("lastSync");
+  if (f) {
+    f.textContent = "⚠️ app.js desatualizado";
+    f.classList.add("warn");
+  }
+});
