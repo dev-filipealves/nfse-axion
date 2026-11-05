@@ -16,7 +16,7 @@
       content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'"
     />
     <meta name="referrer" content="no-referrer" />
-    <link rel="stylesheet" href="styles.css?v=2026-11-04.1" />
+    <link rel="stylesheet" href="styles.css?v=2026-11-04.2" />
     <style>
       /* Rodapé fixo: sempre visível, sem precisar rolar a página */
       body {
@@ -56,24 +56,43 @@
   <body>
     <div class="bar">
       <h1>
-        NFS-e personalizada · AXION<small
-          >Envie o PDF da nota e receba o layout com a sua marca</small
-        >
+        AXION
+        <small>
+          <span class="sn sn-notas">📚 Minhas notas</span>
+          <span class="sn sn-fin">💰 Financeiro</span>
+          <span class="sn sn-rel">📊 Relatórios</span>
+          <span class="sn sn-cfg">⚙️ Configurações</span>
+        </small>
       </h1>
       <div class="corner">
         <button class="btn sec" id="cancel">← Voltar</button>
-        <button class="btn sec" id="cfgbtn" aria-label="Configurar GitHub">
-          ⚙️
-        </button>
       </div>
-      <div class="btns">
-        <button class="btn pickbtn" type="button">📄 Enviar NFS-e (PDF)</button>
-        <button class="btn sec" id="listbtn">📚 Minhas notas</button>
-        <button class="btn sec" id="repbtn">📊 Relatórios</button>
-        <button class="btn sec" id="finbtn">💰 Financeiro</button>
+
+      <!-- Atalhos escondidos: o painel inicial usa esses botões -->
+      <button class="btn sec" id="listbtn" hidden>📚 Minhas notas</button>
+      <button class="btn sec" id="repbtn" hidden>📊 Relatórios</button>
+      <button class="btn sec" id="finbtn" hidden>💰 Financeiro</button>
+      <button class="btn sec" id="cfgbtn" hidden>⚙️ Configurações</button>
+
+      <!-- Ferramentas de cada área: só a barra da área aberta aparece -->
+      <div class="btns tb" id="tb-notas">
+        <button class="btn pickbtn" type="button">📄 Enviar nota</button>
         <button class="btn sec" id="dl" disabled>⬇️ Baixar PDF</button>
         <button class="btn sec" id="sharebtn" disabled>📤 Compartilhar</button>
         <button class="btn sec" id="launchbtn" disabled>💸 Lançar</button>
+      </div>
+      <div class="btns tb" id="tb-fin">
+        <button class="btn" id="f_add_e">➕ Entrada</button>
+        <button class="btn" id="f_add_d">➕ Despesa</button>
+        <button class="btn sec" id="f_rep">🔁 Repetir recorrentes</button>
+        <button class="btn sec" id="f_diz">💡 Dízimo 10%</button>
+        <button class="btn sec" id="f_wpp">📤 WhatsApp</button>
+        <button class="btn sec" id="f_pdf">⬇️ PDF</button>
+        <button class="btn sec" id="f_csv">⬇️ Tabela</button>
+      </div>
+      <div class="btns tb" id="tb-rel">
+        <button class="btn" id="r_csv">⬇️ CSV (Excel)</button>
+        <button class="btn sec" id="r_pdf">⬇️ PDF</button>
       </div>
     </div>
     <div id="msg"></div>
@@ -88,12 +107,12 @@
         </div>
       </header>
 
-      <button class="hero" data-go="notas" type="button">
+      <button class="hero" data-go="rel" type="button">
         <span class="hero-left">
           <span class="hero-tag">VISÃO GERAL</span>
           <span class="hero-main" id="hMes">R$ 0,00</span>
           <span class="hero-sub" id="hSub">faturado no mês</span>
-          <span class="hero-go">📚 Minhas notas ›</span>
+          <span class="hero-go">📊 Ver relatórios ›</span>
         </span>
         <span class="hero-right">
           <span class="hero-pct" id="hPct">0%</span>
@@ -102,7 +121,7 @@
       </button>
 
       <div class="home-sec">
-        <span>FERRAMENTAS</span><span class="home-pill">4</span>
+        <span>FERRAMENTAS</span><span class="home-pill">5</span>
       </div>
       <div class="tiles">
         <button class="tile t-blue" data-go="nota" type="button">
@@ -127,6 +146,30 @@
           </span>
           <span class="tt">Lançar nota</span>
           <span class="ts">Enviar o PDF da NFS-e</span>
+        </button>
+        <button class="tile t-indigo" data-go="notas" type="button">
+          <span class="ico">
+            <svg
+              viewBox="0 0 24 24"
+              width="26"
+              height="26"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path
+                d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"
+              />
+              <path
+                d="M13 4h5.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H13z"
+              />
+            </svg>
+          </span>
+          <span class="tt">Minhas notas</span>
+          <span class="ts">Histórico, busca e cobrança</span>
         </button>
         <button class="tile t-green" data-go="fin" type="button">
           <span class="ico">
@@ -171,7 +214,7 @@
           <span class="tt">Relatórios</span>
           <span class="ts">Mês, ano e limite do MEI</span>
         </button>
-        <button class="tile t-slate" data-go="cfg" type="button">
+        <button class="tile t-slate wide" data-go="cfg" type="button">
           <span class="ico">
             <svg
               viewBox="0 0 24 24"
@@ -272,12 +315,6 @@
         <option value="tudo">Todo o período</option>
       </select>
       <div id="r_out"></div>
-      <button class="btn" id="r_csv" style="width: 100%">
-        ⬇️ Baixar CSV (Excel)
-      </button>
-      <button class="btn sec" id="r_pdf" style="width: 100%">
-        ⬇️ Baixar PDF
-      </button>
     </div>
     <div id="finbox" class="panel" hidden>
       <h2>💰 Financeiro</h2>
@@ -292,20 +329,7 @@
       </div>
       <div id="f_cur" class="small"></div>
       <div id="f_sum"></div>
-      <div class="finacts">
-        <button class="btn" id="f_add_e">➕ Entrada</button>
-        <button class="btn" id="f_add_d">➕ Despesa</button>
-      </div>
-      <div class="finacts">
-        <button class="btn sec" id="f_rep">🔁 Repetir recorrentes</button>
-        <button class="btn sec" id="f_diz">💡 Dízimo 10%</button>
-      </div>
       <div id="f_lists"></div>
-      <div class="finacts">
-        <button class="btn sec" id="f_wpp">📤 WhatsApp</button>
-        <button class="btn sec" id="f_pdf">⬇️ PDF</button>
-        <button class="btn sec" id="f_csv">⬇️ Tabela (CSV)</button>
-      </div>
     </div>
     <div id="fmodal" class="modal" hidden>
       <div
@@ -381,7 +405,7 @@
       <div id="lastSync" class="app-footer-sync">☁ Somente neste aparelho</div>
     </footer>
 
-    <script src="version.js?v=2026-11-04.1"></script>
+    <script src="version.js?v=2026-11-04.2"></script>
 
     <!-- Bibliotecas externas: versão fixa + SRI (o navegador bloqueia o arquivo se ele for alterado) -->
     <script
@@ -411,7 +435,7 @@
     ></script>
 
     <!-- Código da aplicação -->
-    <script src="logo.js?v=2026-11-04.1"></script>
-    <script src="app.js?v=2026-11-04.1"></script>
+    <script src="logo.js?v=2026-11-04.2"></script>
+    <script src="app.js?v=2026-11-04.2"></script>
   </body>
 </html>

@@ -862,3 +862,42 @@ body:has(#empty:not([hidden])) .bar {
   border-color: rgba(154, 166, 196, 0.45);
   color: var(--muted);
 }
+
+/* ---------- Ferramentas no topo: só as da área aberta ---------- */
+/* Atributo "hidden" vale mesmo em elementos com display definido (ex.: .btn) */
+[hidden] {
+  display: none !important;
+}
+.tb {
+  display: none;
+}
+body:has(#listbox:not([hidden])) #tb-notas,
+body:has(#fit:not([hidden])) #tb-notas,
+body:has(#finbox:not([hidden])) #tb-fin,
+body:has(#repbox:not([hidden])) #tb-rel {
+  display: flex;
+}
+/* Nome da área no título */
+.bar h1 {
+  font-size: 20px;
+  letter-spacing: 0.5px;
+}
+.sn {
+  display: none;
+}
+body:has(#listbox:not([hidden])) .sn-notas,
+body:has(#fit:not([hidden])) .sn-notas,
+body:has(#finbox:not([hidden])) .sn-fin,
+body:has(#repbox:not([hidden])) .sn-rel,
+body:has(#cfgbox:not([hidden])) .sn-cfg {
+  display: inline;
+}
+.t-indigo .ico {
+  background: rgba(111, 160, 255, 0.16);
+  border-color: rgba(111, 160, 255, 0.5);
+  color: #8fb4ff;
+}
+.tile.wide {
+  grid-column: span 2;
+  min-height: 120px;
+}

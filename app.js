@@ -11,7 +11,7 @@
 "use strict";
 
 // Identificação desta publicação (o version.js confere se os arquivos combinam)
-window.AXION_BUILD = "2026-11-04.1";
+window.AXION_BUILD = "2026-11-04.2";
 
 window.addEventListener("error", function (e) {
   var m = document.getElementById("msg");

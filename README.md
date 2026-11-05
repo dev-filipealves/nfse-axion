@@ -28,8 +28,9 @@ Funciona direto no navegador do celular ou do computador, sem servidor próprio 
 ## ✨ O que a ferramenta faz
 
 ### 🏠 Tela inicial
-- Painel com quadrados: **Lançar nota**, **Finanças**, **Relatórios** e **Configurações**.
-- Cartão **Visão geral** com o faturamento do mês, o valor a receber e a porcentagem do limite anual do MEI. Tocar nele abre **Minhas notas**.
+- Painel com quadrados: **Lançar nota**, **Minhas notas**, **Finanças**, **Relatórios** e **Configurações**.
+- Cada área mostra no topo **só as ferramentas dela**: Minhas notas (enviar nota, baixar PDF, compartilhar e lançar), Finanças (entradas, despesas, recorrentes, dízimo, WhatsApp, PDF e tabela) e Relatórios (CSV e PDF).
+- Cartão **Visão geral** com o faturamento do mês, o valor a receber e a porcentagem do limite anual do MEI. Tocar nele abre os **Relatórios**.
 - O botão **← Voltar** de qualquer tela leva de volta ao painel.
 
 ### 🧾 Nota personalizada
