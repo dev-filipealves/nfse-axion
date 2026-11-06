@@ -901,3 +901,14 @@ body:has(#cfgbox:not([hidden])) .sn-cfg {
   grid-column: span 2;
   min-height: 120px;
 }
+
+/* ---------- Ícones dos botões Entrada e Despesa ---------- */
+.btn .ic {
+  flex-shrink: 0;
+}
+.ic-in {
+  color: #2e9e5b;
+}
+.ic-out {
+  color: #d23b3b;
+}

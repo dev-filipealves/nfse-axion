@@ -16,7 +16,7 @@
       content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'"
     />
     <meta name="referrer" content="no-referrer" />
-    <link rel="stylesheet" href="styles.css?v=2026-11-04.2" />
+    <link rel="stylesheet" href="styles.css?v=2026-11-04.3" />
     <style>
       /* Rodapé fixo: sempre visível, sem precisar rolar a página */
       body {
@@ -82,8 +82,42 @@
         <button class="btn sec" id="launchbtn" disabled>💸 Lançar</button>
       </div>
       <div class="btns tb" id="tb-fin">
-        <button class="btn" id="f_add_e">➕ Entrada</button>
-        <button class="btn" id="f_add_d">➕ Despesa</button>
+        <button class="btn sec" id="f_add_e">
+          <svg
+            class="ic ic-in"
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 8v8M8.5 12.5 12 16l3.5-3.5" />
+          </svg>
+          Entrada
+        </button>
+        <button class="btn sec" id="f_add_d">
+          <svg
+            class="ic ic-out"
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 16V8M8.5 11.5 12 8l3.5 3.5" />
+          </svg>
+          Despesa
+        </button>
         <button class="btn sec" id="f_rep">🔁 Repetir recorrentes</button>
         <button class="btn sec" id="f_diz">💡 Dízimo 10%</button>
       </div>
@@ -310,7 +344,7 @@
       <div id="r_out"></div>
       <div class="sect">Exportar</div>
       <div class="finacts">
-        <button class="btn" id="r_csv">⬇️ CSV (Excel)</button>
+        <button class="btn sec" id="r_csv">⬇️ CSV (Excel)</button>
         <button class="btn sec" id="r_pdf">⬇️ PDF</button>
       </div>
     </div>
@@ -409,7 +443,7 @@
       <div id="lastSync" class="app-footer-sync">☁ Somente neste aparelho</div>
     </footer>
 
-    <script src="version.js?v=2026-11-04.2"></script>
+    <script src="version.js?v=2026-11-04.3"></script>
 
     <!-- Bibliotecas externas: versão fixa + SRI (o navegador bloqueia o arquivo se ele for alterado) -->
     <script
@@ -439,7 +473,7 @@
     ></script>
 
     <!-- Código da aplicação -->
-    <script src="logo.js?v=2026-11-04.2"></script>
-    <script src="app.js?v=2026-11-04.2"></script>
+    <script src="logo.js?v=2026-11-04.3"></script>
+    <script src="app.js?v=2026-11-04.3"></script>
   </body>
 </html>

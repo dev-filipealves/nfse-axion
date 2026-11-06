@@ -29,7 +29,7 @@ Funciona direto no navegador do celular ou do computador, sem servidor próprio 
 
 ### 🏠 Tela inicial
 - Painel com quadrados: **Lançar nota**, **Minhas notas**, **Finanças**, **Relatórios** e **Configurações**.
-- Cada área mostra no topo **só as ferramentas dela**: Minhas notas (enviar nota, baixar PDF, compartilhar e lançar), Finanças (entradas, despesas, recorrentes, dízimo, WhatsApp, PDF e tabela) e Relatórios (CSV e PDF).
+- Cada área mostra no topo **só as ferramentas de ação dela**: Minhas notas (enviar nota, baixar PDF, compartilhar e lançar) e Finanças (entrada, despesa, repetir recorrentes e dízimo). Em Finanças e Relatórios, os botões de exportação (WhatsApp, PDF, tabela e CSV) ficam **no fim da tela**.
 - Cartão **Visão geral** com o faturamento do mês, o valor a receber e a porcentagem do limite anual do MEI. Tocar nele abre os **Relatórios**.
 - O botão **← Voltar** de qualquer tela leva de volta ao painel.
 
@@ -77,8 +77,8 @@ Funciona direto no navegador do celular ou do computador, sem servidor próprio 
 - 🔁 **Itens recorrentes** e botão para repetir no mês seguinte os recorrentes do mês anterior (como "a pagar").
 - 💡 **Dízimo 10%:** calcula 10% das entradas do mês na conta aberta (PJ ou PF).
 - 🗂 **Despesas por categoria**, com porcentagem do total.
-- 📤 **Resumo para WhatsApp** (editável antes de enviar, com opção de copiar o texto).
-- ⬇️ Exportação do mês em **PDF** e em **tabela (CSV, abre no Excel)**.
+- 📤 **Resumo para WhatsApp** (editável antes de enviar, com opção de copiar o texto): cada lançamento aparece com ✅ quando está pago/recebido e ❌ quando está pendente.
+- ⬇️ Exportação do mês em **PDF** (cada lançamento mostra PAGO ou A PAGAR, RECEBIDO ou A RECEBER) e em **tabela (CSV, abre no Excel)**.
 - 💾 Dados salvos no arquivo **`financeiro.json`**, no mesmo repositório privado das notas, com as mesmas proteções (token com senha, sem cache local quando protegido).
 
 ---

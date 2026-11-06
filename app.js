@@ -11,7 +11,7 @@
 "use strict";
 
 // Identificação desta publicação (o version.js confere se os arquivos combinam)
-window.AXION_BUILD = "2026-11-04.2";
+window.AXION_BUILD = "2026-11-04.3";
 
 window.addEventListener("error", function (e) {
   var m = document.getElementById("msg");
@@ -2208,7 +2208,7 @@ window.addEventListener("error", function (e) {
       const m = $("#fmodal"),
         edit = !!item;
       $("#ftitle").textContent =
-        (edit ? "✏️ Editar " : "➕ ") +
+        (edit ? "✏️ Editar " : "Nova ") +
         (tipo === "entrada" ? "entrada" : "despesa") +
         " · " +
         finLedger;
@@ -2426,7 +2426,7 @@ window.addEventListener("error", function (e) {
   function resumoTexto() {
     const T = totaisFin(itensDoMes());
     const L = (x) =>
-      "• " +
+      (x.pago === false ? "❌ " : "✅ ") +
       x.nome +
       ": " +
       brl(x.valor) +
@@ -2572,6 +2572,33 @@ window.addEventListener("error", function (e) {
         doc.text(String(b), 196, y, { align: "right" });
         y += 5.5;
       };
+      // Linha de um lançamento: nome, data, situação (PAGO / A PAGAR) e valor
+      const rowItem = (x) => {
+        nl(6);
+        doc.setFontSize(9);
+        doc.setTextColor(0, 0, 0);
+        doc.text(String(x.nome).slice(0, 48), 14, y);
+        doc.text(dataBR(x.data), 112, y);
+        const ok = x.pago !== false;
+        if (ok) doc.setTextColor(46, 158, 91);
+        else doc.setTextColor(210, 59, 59);
+        doc.setFont("helvetica", "bold");
+        doc.text(
+          x.tipo === "entrada"
+            ? ok
+              ? "RECEBIDO"
+              : "A RECEBER"
+            : ok
+              ? "PAGO"
+              : "A PAGAR",
+          140,
+          y,
+        );
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(0, 0, 0);
+        doc.text(brl(x.valor), 196, y, { align: "right" });
+        y += 5.5;
+      };
       head("Resumo");
       row("Total de entradas", brl(T.e));
       row("Total de despesas", brl(T.d));
@@ -2579,21 +2606,9 @@ window.addEventListener("error", function (e) {
       if (T.aReceber > 0) row("A receber", brl(T.aReceber));
       if (T.aPagar > 0) row("A pagar", brl(T.aPagar));
       head("Entradas");
-      T.ent.forEach((x) =>
-        row(
-          x.nome,
-          brl(x.valor),
-          dataBR(x.data) + (x.pago === false ? " · a receber" : ""),
-        ),
-      );
+      T.ent.forEach(rowItem);
       head("Despesas");
-      T.des.forEach((x) =>
-        row(
-          x.nome,
-          brl(x.valor),
-          dataBR(x.data) + (x.pago === false ? " · a pagar" : ""),
-        ),
-      );
+      T.des.forEach(rowItem);
       head("Despesas por categoria");
       porCategoria(T.des).forEach((c) =>
         row(c.nome, brl(c.v), T.d ? ((c.v / T.d) * 100).toFixed(0) + "%" : ""),
