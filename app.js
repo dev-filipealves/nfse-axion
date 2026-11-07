@@ -11,7 +11,7 @@
 "use strict";
 
 // Identificação desta publicação (o version.js confere se os arquivos combinam)
-window.AXION_BUILD = "2026-11-07.1";
+window.AXION_BUILD = "2026-11-07.2";
 
 window.addEventListener("error", function (e) {
   var m = document.getElementById("msg");
@@ -323,7 +323,28 @@ window.addEventListener("error", function (e) {
     p.style.transform = `scale(${s})`;
     w.style.height = p.offsetHeight * s + 8 + "px";
   }
-  addEventListener("resize", fit);
+  /**
+   * Reajusta a nota e a ordem de serviço quando a LARGURA da tela muda.
+   * No celular, a barra de endereço aparece e some durante a rolagem e dispara
+   * "resize" só com mudança de altura: isso é ignorado, e no máximo um ajuste
+   * por quadro é feito (evita travadas ao rolar).
+   */
+  let ultimaLargura = window.innerWidth,
+    ajustePendente = false;
+  addEventListener(
+    "resize",
+    () => {
+      if (window.innerWidth === ultimaLargura || ajustePendente) return;
+      ultimaLargura = window.innerWidth;
+      ajustePendente = true;
+      requestAnimationFrame(() => {
+        ajustePendente = false;
+        fit();
+        if (typeof fitOs === "function") fitOs();
+      });
+    },
+    { passive: true },
+  );
 
   /** Processa o PDF enviado: lê, mostra a nota e salva. */
   async function handleFile(f) {
@@ -3845,7 +3866,6 @@ window.addEventListener("error", function (e) {
     p.style.transform = "scale(" + s + ")";
     w.style.height = p.offsetHeight * s + 8 + "px";
   }
-  window.addEventListener("resize", fitOs);
   /** Mostra uma ordem de serviço como documento. */
   function osMostrar(id) {
     const o = os.find((x) => x.id === id);
