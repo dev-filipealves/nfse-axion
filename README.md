@@ -28,13 +28,26 @@ Funciona direto no navegador do celular ou do computador, sem servidor próprio 
 ## ✨ O que a ferramenta faz
 
 ### 🏠 Tela inicial
-- Painel com quadrados: **Lançar nota**, **Minhas notas**, **Finanças**, **Relatórios** e **Configurações**.
+- Painel com quadrados: **Lançar nota**, **Minhas notas**, **Finanças**, **Relatórios**, **Ordem de serviço** e **Configurações**.
 - Cada área mostra no topo **só as ferramentas de ação dela**: Minhas notas (enviar nota, baixar PDF, compartilhar e lançar) e Finanças (entrada, despesa, repetir recorrentes e dízimo). Em Finanças e Relatórios, os botões de exportação (WhatsApp, PDF, tabela e CSV) ficam **no fim da tela**.
 - Cartão **Visão geral** com o faturamento do mês, o valor a receber e a porcentagem do limite anual do MEI. Tocar nele abre os **Relatórios**.
 - O botão **← Voltar** de qualquer tela leva de volta ao painel.
 
+### 🛠 Ordem de serviço
+- Cadastro de **cliente, contato, veículo, placa, data e número** (sequencial automático).
+- **Produtos/peças** com quantidade e valor unitário.
+- **Serviços por hora** (horas × valor/hora, aceita "1,5" ou "1h30") ou por **valor fixo**.
+- Desconto, forma de pagamento, observações e **total calculado na hora**.
+- Situação **Aberta → Concluída → Paga**, documento no layout AXION, **PDF**, **compartilhar** e **lançar no financeiro** (PJ ou PF).
+- Dados salvos no arquivo **`ordens.json`**, no mesmo repositório privado.
+
+### 🖥️ Computador e 📱 celular
+- No computador: **menu lateral**, barra superior com busca, quadrados maiores e painel com **faturamento mês a mês, últimas notas, ações necessárias e principais categorias**.
+- No celular: visual de app, com os mesmos cartões empilhados.
+
 ### 🧾 Nota personalizada
 - 📥 Lê o PDF do DANFSe (padrão nacional) e extrai os dados da nota.
+- 📲 Reconhece os **dois modelos** de DANFSe: o do site da NFS-e (v2.0) e o do app **NFS-e Mobile** (v1.0).
 - 🎨 Monta a nota com o layout e a logo da AXION, mantendo as informações obrigatórias: identificação, chave de acesso, prestador, tomador, serviço, tributação, valores e informações complementares.
 - 🏷 Inclui o nome fantasia da empresa no bloco do prestador.
 - 📱 Gera um **QR Code que abre a consulta pública do portal nacional** já com a chave de acesso da nota.
@@ -158,7 +171,7 @@ A ferramenta foi pensada para que dados de clientes e credenciais **não fiquem 
    - uma senha e a confirmação.
 5. Toque em **Salvar e testar**. Quando aparecer a confirmação de conexão, as próximas notas já serão guardadas no repositório.
 
-Os arquivos `notas.json` e `financeiro.json` e a pasta `pdfs/` são criados automaticamente.
+Os arquivos `notas.json`, `financeiro.json` e `ordens.json` e a pasta `pdfs/` são criados automaticamente.
 
 ---
 

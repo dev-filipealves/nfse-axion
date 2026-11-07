@@ -11,7 +11,7 @@
 "use strict";
 
 // Identificação desta publicação (o version.js confere se os arquivos combinam)
-window.AXION_BUILD = "2026-11-04.3";
+window.AXION_BUILD = "2026-11-07.1";
 
 window.addEventListener("error", function (e) {
   var m = document.getElementById("msg");
@@ -23,6 +23,7 @@ window.addEventListener("error", function (e) {
 (function () {
   const LOGO = window.AXION_LOGO;
   document.getElementById("logoEmpty").src = LOGO;
+  document.getElementById("logoTop").src = LOGO;
   const FANTASIA = "AXION | SISTEMAS EMBARCADOS E ENERGIA";
   const $ = (s) => document.querySelector(s);
   const esc = (s) =>
@@ -64,26 +65,41 @@ window.addEventListener("error", function (e) {
     const tc = await page.getTextContent();
     return tc.items.map((i) => i.str.trim()).filter(Boolean);
   }
-  /** Cria um leitor que devolve o texto logo após um rótulo (n = ocorrência). */
+  /** Texto normalizado para comparar rótulos (sem diferenciar maiúsculas). */
+  const normRot = (s) =>
+    String(s || "")
+      .trim()
+      .toLocaleLowerCase("pt-BR");
+  /**
+   * Cria um leitor que devolve o texto logo após um rótulo.
+   * Aceita uma lista de rótulos alternativos (os dois modelos de DANFSe) e a ocorrência n
+   * (0 = prestador, 1 = tomador, quando o mesmo rótulo se repete).
+   */
   function reader(items) {
-    return (label, n = 0) => {
-      let c = 0;
-      for (let i = 0; i < items.length; i++) {
-        const t = items[i];
-        if (t === label || t.endsWith(" " + label)) {
-          if (c === n) {
-            const v = items[i + 1];
-            return v === undefined ? "-" : v;
+    const low = items.map(normRot);
+    return (labels, n = 0) => {
+      for (const label of [].concat(labels)) {
+        const L = normRot(label);
+        let c = 0;
+        for (let i = 0; i < low.length; i++) {
+          if (low[i] === L || low[i].endsWith(" " + L)) {
+            if (c === n) {
+              const v = items[i + 1];
+              return v === undefined ? "-" : v;
+            }
+            c++;
           }
-          c++;
         }
       }
       return "-";
     };
   }
-  /** Converte os textos do DANFSe em um objeto com os dados da nota. */
+  /** Converte os textos do DANFSe em um objeto com os dados da nota.
+   *  Funciona com os dois modelos: o do site (DANFSe v2.0) e o do app NFS-e Mobile (DANFSe v1.0). */
   function parse(items) {
     const g = reader(items);
+    const low = items.map(normRot);
+    const limpa = (v) => (/^R\$\s*$/.test(String(v).trim()) ? "-" : v); // "R$" sem valor
     const chaveFb =
       items.find((t) => /^\d{40,}$/.test(t.replace(/\s/g, ""))) || "-";
     let chave = g("CHAVE DE ACESSO DA NFS-e");
@@ -91,6 +107,39 @@ window.addEventListener("error", function (e) {
     let regime = g("Simples Nacional na Data de Competência");
     if (/Microempreendedor/i.test(regime))
       regime = "Optante – Microempreendedor Individual (MEI)";
+    // Código de tributação: v2.0 traz "14.01.01 / -"; v1.0 traz o código com a descrição
+    let trib = g("Código de Tributação Nacional/Municipal");
+    if (trib === "-") {
+      const nac = String(g("Código de Tributação Nacional")).match(
+        /^\d{2}\.\d{2}\.\d{2}/,
+      );
+      const mun = g("Código de Tributação Municipal");
+      trib = nac ? nac[0] + " / " + (mun || "-") : "-";
+    }
+    // NBS: v2.0 tem campo próprio; v1.0 traz "NBS: 120013110" nas informações complementares
+    let nbs = g("Código da NBS");
+    if (nbs === "-") {
+      const raw = String(g("NBS:")).replace(/\D/g, "");
+      nbs =
+        raw.length === 9
+          ? raw[0] +
+            "." +
+            raw.slice(1, 5) +
+            "." +
+            raw.slice(5, 7) +
+            "." +
+            raw.slice(7)
+          : raw || "-";
+    }
+    // Informações complementares: junta todos os textos depois do rótulo
+    const iInfo = low.indexOf(normRot("INFORMAÇÕES COMPLEMENTARES"));
+    const info =
+      iInfo >= 0
+        ? items
+            .slice(iInfo + 1)
+            .join(" ")
+            .trim() || "-"
+        : "-";
     const d = {
       chave,
       numero: g("NÚMERO DA NFS-e"),
@@ -105,49 +154,70 @@ window.addEventListener("error", function (e) {
         doc: g("CNPJ / CPF / NIF", 0),
         nome: g("Nome / Nome Empresarial", 0),
         tel: g("Telefone", 0),
-        mun: g("Município / Sigla UF", 0),
-        cep: g("Código IBGE / CEP", 0),
+        mun: g(["Município / Sigla UF", "Município"], 0),
+        cep: g(["Código IBGE / CEP", "CEP"], 0),
         end: g("Endereço", 0),
         email: g("E-mail", 0),
-        im: g("Indicador Municipal (Inscrição)", 0),
+        im: g(["Indicador Municipal (Inscrição)", "Inscrição Municipal"], 0),
         regime,
       },
       t: {
         doc: g("CNPJ / CPF / NIF", 1),
         nome: g("Nome / Nome Empresarial", 1),
         tel: g("Telefone", 1),
-        mun: g("Município / Sigla UF", 1),
-        cep: g("Código IBGE / CEP", 1),
+        mun: g(["Município / Sigla UF", "Município"], 1),
+        cep: g(["Código IBGE / CEP", "CEP"], 1),
         end: g("Endereço", 1),
         email: g("E-mail", 1),
-        im: g("Indicador Municipal (Inscrição)", 1),
+        im: g(["Indicador Municipal (Inscrição)", "Inscrição Municipal"], 1),
       },
       s: {
-        trib: g("Código de Tributação Nacional/Municipal"),
-        nbs: g("Código da NBS"),
-        local: g("Local da Prestação / Sigla UF / País"),
+        trib,
+        nbs,
+        local: g([
+          "Local da Prestação / Sigla UF / País",
+          "Local da Prestação",
+        ]),
         desc: g("Descrição do Serviço"),
       },
       iss: {
-        tipo: g("Tipo de Tributação do ISSQN"),
-        inc: g("Município / Sigla UF / País de Incidência do ISSQN"),
+        tipo: g(["Tipo de Tributação do ISSQN", "Tributação do ISSQN"]),
+        inc: g([
+          "Município / Sigla UF / País de Incidência do ISSQN",
+          "Município de Incidência do ISSQN",
+        ]),
         ret: g("Retenção do ISSQN"),
         bc: g("BC ISSQN"),
         aliq: g("Alíquota Aplicada"),
         val: g("ISSQN Apurado"),
       },
       v: {
-        op: g("VALOR DA OPERAÇÃO / SERVIÇO"),
+        op: g(["VALOR DA OPERAÇÃO / SERVIÇO", "Valor do Serviço"]),
         liq: g("VALOR LÍQUIDO DA NFS-e"),
         ret: g("Total das Retenções (ISSQN / Federais)"),
-        di: g("Desconto Incondicionado"),
-        dc: g("Desconto Condicionado"),
+        di: limpa(g("Desconto Incondicionado")),
+        dc: limpa(g("Desconto Condicionado")),
         ibs: g("Total do IBS/CBS"),
       },
-      info: g("INFORMAÇÕES COMPLEMENTARES"),
+      info,
     };
-    const m = items.find((t) => /^Município:/.test(t));
-    d.municipioDoc = m ? m.replace(/^Município:\s*/, "") : "";
+    const m =
+      items.find((t) => /^Município:/.test(t)) ||
+      items.find((t) => /^Município de /.test(t));
+    d.municipioDoc = m
+      ? m.replace(/^Município(:| de)\s*/, "").replace(/\s*-\s*/, " - ")
+      : "";
+    if (
+      d.municipioDoc &&
+      !/ - [A-Z]{2}$/.test(d.municipioDoc) &&
+      /[A-Z]{2}$/.test(d.p.mun)
+    )
+      d.municipioDoc += " - " + d.p.mun.slice(-2);
+    // Confere se o PDF é mesmo um DANFSe (precisa ter chave e número)
+    if (!/\d{40,}/.test(String(d.chave).replace(/\D/g, "")) || d.numero === "-")
+      throw new Error(
+        "este PDF não parece ser um DANFSe. Use o PDF da nota baixado do portal ou do app NFS-e Mobile.",
+      );
     return d;
   }
   const F = (l, v, c = "") =>
@@ -236,6 +306,7 @@ window.addEventListener("error", function (e) {
     $("#cfgbox").hidden = true;
     $("#repbox").hidden = true;
     $("#finbox").hidden = true;
+    $("#oslist").hidden = $("#oseditor").hidden = $("#osview").hidden = true;
     $("#fit").hidden = false;
     $("#hint").hidden = false;
     $("#dl").disabled = false;
@@ -772,6 +843,9 @@ window.addEventListener("error", function (e) {
       "#cfgbox",
       "#repbox",
       "#finbox",
+      "#oslist",
+      "#oseditor",
+      "#osview",
     ].forEach((s) => {
       $(s).hidden = true;
     });
@@ -1236,7 +1310,7 @@ window.addEventListener("error", function (e) {
     const D = repData(),
       pc = (v) => (D.tot ? ((v / D.tot) * 100).toFixed(0) + "%" : "0%");
     $("#r_out").innerHTML =
-      '<div class="sect">Resumo · ' +
+      '<div class="rcols"><div class="rcol"><div class="sect">Resumo · ' +
       esc(D.R.t) +
       "</div>" +
       '<div class="row"><span>Notas emitidas</span><b>' +
@@ -1257,7 +1331,7 @@ window.addEventListener("error", function (e) {
           "</b></div>"
         : "") +
       chartHtml(D) +
-      '<div class="sect">Por cliente</div>' +
+      '</div><div class="rcol"><div class="sect">Por cliente</div>' +
       (D.cli
         .map(
           (c) =>
@@ -1290,7 +1364,8 @@ window.addEventListener("error", function (e) {
             brl(vOf(n)) +
             "</b></div>",
         )
-        .join("") || '<div class="small">Nenhuma.</div>');
+        .join("") || '<div class="small">Nenhuma.</div>') +
+      "</div></div>";
   }
   /** Abre a tela de relatórios. */
   async function showRep() {
@@ -1697,6 +1772,7 @@ window.addEventListener("error", function (e) {
     current = null;
     $("#repbox").hidden = true;
     $("#finbox").hidden = true;
+    $("#oslist").hidden = $("#oseditor").hidden = $("#osview").hidden = true;
     $("#listbox").hidden = true;
     $("#cfgbox").hidden = true;
     $("#paper").innerHTML = "";
@@ -2176,16 +2252,17 @@ window.addEventListener("error", function (e) {
         : "");
     const cats = porCategoria(T.des);
     $("#f_lists").innerHTML =
-      '<div class="sect">💰 Entradas (' +
+      '<div class="fcols"><div class="fcol"><div class="sect">💰 Entradas (' +
       T.ent.length +
       ")</div>" +
       (T.ent.map(finRow).join("") ||
         '<div class="small">Nenhuma entrada neste mês.</div>') +
-      '<div class="sect">💸 Despesas (' +
+      '</div><div class="fcol"><div class="sect">💸 Despesas (' +
       T.des.length +
       ")</div>" +
       (T.des.map(finRow).join("") ||
         '<div class="small">Nenhuma despesa neste mês.</div>') +
+      '</div><div class="fcol">' +
       (cats.length
         ? '<div class="sect">Despesas por categoria</div>' +
           cats
@@ -2200,7 +2277,8 @@ window.addEventListener("error", function (e) {
                 "</b></div>",
             )
             .join("")
-        : "");
+        : "") +
+      "</div></div>";
   }
   /** Janela para criar ou editar um item; devolve { acao, dados }. */
   function openItem(tipo, item) {
@@ -2854,21 +2932,1200 @@ window.addEventListener("error", function (e) {
       qtd +
       " nota(s)";
     $("#hPct").textContent = Math.round((ano / LIMITE_MEI) * 100) + "%";
+    $("#hBar").style.width =
+      Math.min(100, (ano / LIMITE_MEI) * 100).toFixed(1) + "%";
+    $("#tbMes").textContent =
+      "Faturado em " +
+      now.toLocaleDateString("pt-BR", { month: "long" }) +
+      " · " +
+      brl(mes);
+    renderDash();
   }
-  /** Cada quadrado da tela inicial leva para uma ferramenta. */
-  $("#empty").addEventListener("click", (ev) => {
+  /** Quadrados, menu lateral e cartões do painel levam para as ferramentas. */
+  document.addEventListener("click", (ev) => {
     const b = ev.target.closest("[data-go]");
+    if (b) {
+      const go = b.getAttribute("data-go");
+      if (go === "nota") openPicker();
+      else if (go === "fin") showFin();
+      else if (go === "rel") showRep();
+      else if (go === "notas") showList();
+      else if (go === "os") showOs();
+      else if (go === "home") $("#cancel").click();
+      else if (go === "cfg") $("#cfgbtn").click();
+      return;
+    }
+    const on = ev.target.closest("[data-opennote]");
+    if (on) {
+      const n = notes.find((x) => x.id === on.getAttribute("data-opennote"));
+      if (n) {
+        current = n.d;
+        render(current);
+        say("Nota " + n.nome + " aberta.");
+      }
+      return;
+    }
+    const dc = ev.target.closest("[data-dcobrar]");
+    if (dc) {
+      cobrar(dc.getAttribute("data-dcobrar"));
+      return;
+    }
+    const dos = ev.target.closest("[data-dos]");
+    if (dos) {
+      osMostrar(dos.getAttribute("data-dos"));
+      return;
+    }
+    const dp = ev.target.closest("[data-dpagar]");
+    if (dp) {
+      finLedger = dp.getAttribute("data-dpagar");
+      finMes = mesKey(new Date());
+      showFin();
+    }
+  });
+
+  /* ================= Painel (cartões da tela inicial) ================= */
+  const MESES_CURTOS = [
+    "Jan",
+    "Fev",
+    "Mar",
+    "Abr",
+    "Mai",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Set",
+    "Out",
+    "Nov",
+    "Dez",
+  ];
+  /** Valor abreviado para eixos e bolhas: R$ 1,2k, R$ 45k. */
+  function brlCurto(v) {
+    if (v >= 1000)
+      return (
+        "R$ " + (v / 1000).toFixed(v >= 10000 ? 0 : 1).replace(".", ",") + "k"
+      );
+    return "R$ " + Math.round(v);
+  }
+  /** Primeira letra do nome, para o avatar. */
+  const inicial = (s) =>
+    String(s || "?")
+      .trim()
+      .charAt(0)
+      .toUpperCase() || "?";
+  /** Cartões do painel: faturamento, últimas notas, ação necessária e categorias. */
+  function renderDash() {
+    if (!$("#dFluxo")) return;
+    const now = new Date(),
+      ano = now.getFullYear(),
+      mk = mesKey(now);
+    /* 1) faturamento mês a mês contra o limite mensal do MEI */
+    const meses = Array(12).fill(0);
+    let totalAno = 0;
+    notes.forEach((n) => {
+      if (!ativa(n)) return;
+      const x = ndate(n);
+      if (x && x.y === ano) {
+        meses[x.m - 1] += vOf(n);
+        totalAno += vOf(n);
+      }
+    });
+    const meta = LIMITE_MEI / 12,
+      topo = Math.max.apply(null, meses.concat([meta * 1.25])) * 1.05;
+    const eixo = [1, 0.75, 0.5, 0.25, 0]
+      .map((f) => "<span>" + (f ? brlCurto(topo * f) : "0") + "</span>")
+      .join("");
+    $("#dFluxo").innerHTML =
+      '<div class="fl"><div class="fl-axis">' +
+      eixo +
+      '</div><div class="fl-bars">' +
+      meses
+        .map(
+          (v, i) =>
+            '<div class="fl-col' +
+            (i === now.getMonth() ? " cur" : "") +
+            '"><div class="fl-plot">' +
+            '<div class="fl-trk" style="height:' +
+            ((meta / topo) * 100).toFixed(1) +
+            '%"></div>' +
+            '<div class="fl-fil" title="' +
+            brl(v) +
+            '" style="height:' +
+            (v > 0 ? Math.max(3, (v / topo) * 100).toFixed(1) : 0) +
+            '%"></div>' +
+            "</div><i>" +
+            MESES_CURTOS[i] +
+            "</i></div>",
+        )
+        .join("") +
+      "</div></div>";
+    $("#dFluxoSub").textContent =
+      brl(totalAno) +
+      " no ano · " +
+      Math.round((totalAno / LIMITE_MEI) * 100) +
+      "% do limite";
+    /* 2) últimas notas */
+    const ult = notes
+      .slice()
+      .sort((x, y) => String(y.nome).localeCompare(String(x.nome)))
+      .slice(0, 5);
+    $("#dUltimas").innerHTML = ult.length
+      ? ult
+          .map((n) => {
+            const st =
+              n.status === "cancelada"
+                ? '<span class="badge off">🚫 Cancelada</span>'
+                : n.status === "recebida"
+                  ? '<span class="badge ok">✅ Recebida</span>'
+                  : '<span class="badge wait">⏳ A receber</span>';
+            return (
+              '<button class="lrow" type="button" data-opennote="' +
+              esc(n.id) +
+              '"><span class="av">' +
+              esc(inicial(n.d.t.nome)) +
+              '</span><span class="lmain"><b>' +
+              esc(n.d.t.nome) +
+              "</b><small>NFS-e " +
+              esc(n.nome) +
+              '</small></span><span class="lval"><b>' +
+              esc(n.d.v.op) +
+              "</b>" +
+              st +
+              "</span></button>"
+            );
+          })
+          .join("")
+      : '<div class="small">Nenhuma nota ainda. Toque em “Lançar nota”.</div>';
+    /* 3) ação necessária: cobranças, ordens concluídas sem pagamento e despesas a pagar */
+    const receber = notes
+      .filter((n) => ativa(n) && (n.status || "receber") === "receber")
+      .map((n) => ({ n: n, dias: diasDesde(n) }))
+      .sort((x, y) => y.dias - x.dias);
+    const osPend = os.filter((o) => o.status === "concluida");
+    const pagar = fin
+      .filter(
+        (x) =>
+          x.tipo === "despesa" &&
+          x.pago === false &&
+          String(x.data).slice(0, 7) === mk,
+      )
+      .sort((x, y) => String(x.data).localeCompare(String(y.data)));
+    const ac = [];
+    receber.slice(0, 3).forEach((r) =>
+      ac.push({
+        at: 'data-dcobrar="' + esc(r.n.id) + '"',
+        ic: "💬",
+        t: "Cobrar " + r.n.d.t.nome,
+        s: "NFS-e " + r.n.nome + " · há " + r.dias + " dia(s)",
+        v: vOf(r.n),
+        late: r.dias > 30,
+      }),
+    );
+    osPend.slice(0, 2).forEach((o) =>
+      ac.push({
+        at: 'data-dos="' + esc(o.id) + '"',
+        ic: "🛠",
+        t: "Receber OS " + osNum(o),
+        s: o.cliente,
+        v: osTotals(o).total,
+      }),
+    );
+    pagar.slice(0, 3).forEach((x) =>
+      ac.push({
+        at: 'data-dpagar="' + esc(x.ledger) + '"',
+        ic: "💸",
+        t: "Pagar " + x.nome,
+        s: x.ledger + " · " + dataBR(x.data).slice(0, 5),
+        v: x.valor,
+      }),
+    );
+    const nPend = receber.length + osPend.length + pagar.length;
+    $("#dAcaoN").textContent = nPend;
+    $("#tbPend").textContent =
+      "⏳ " + nPend + (nPend === 1 ? " pendência" : " pendências");
+    $("#dAcao").innerHTML = ac.length
+      ? ac
+          .slice(0, 6)
+          .map(
+            (x) =>
+              '<button class="lrow" type="button" ' +
+              x.at +
+              '><span class="av ico2">' +
+              x.ic +
+              '</span><span class="lmain"><b>' +
+              esc(x.t) +
+              "</b><small>" +
+              esc(x.s) +
+              '</small></span><span class="lval"><b' +
+              (x.late ? ' class="late"' : "") +
+              ">" +
+              brl(x.v) +
+              "</b></span></button>",
+          )
+          .join("")
+      : '<div class="small">Tudo em dia ✅</div>';
+    /* 4) principais categorias de despesa do mês (PJ + PF) */
+    const mc = {};
+    fin
+      .filter((x) => x.tipo === "despesa" && String(x.data).slice(0, 7) === mk)
+      .forEach((x) => {
+        const k = x.cat || "Outros";
+        mc[k] = (mc[k] || 0) + x.valor;
+      });
+    const cats = Object.keys(mc)
+      .map((k) => ({ nome: k, v: mc[k] }))
+      .sort((x, y) => y.v - x.v);
+    if (!cats.length) {
+      $("#dCateg").innerHTML =
+        '<div class="small">Sem despesas neste mês. Lance em Finanças.</div>';
+      return;
+    }
+    const cor = ["#2f6bff", "#6fa0ff", "#2e9e5b"],
+      pos = [
+        [100, 100],
+        [222, 76],
+        [208, 150],
+      ],
+      tot = cats.reduce((s, c) => s + c.v, 0);
+    const bolhas = cats
+      .slice(0, 3)
+      .map((c, i) => {
+        const r = Math.max(30, 70 * Math.sqrt(c.v / cats[0].v));
+        return (
+          '<circle cx="' +
+          pos[i][0] +
+          '" cy="' +
+          pos[i][1] +
+          '" r="' +
+          r.toFixed(0) +
+          '" fill="' +
+          cor[i] +
+          '" opacity="0.92"></circle><text x="' +
+          pos[i][0] +
+          '" y="' +
+          (pos[i][1] - 2) +
+          '" class="bt1">' +
+          brlCurto(c.v) +
+          '</text><text x="' +
+          pos[i][0] +
+          '" y="' +
+          (pos[i][1] + 13) +
+          '" class="bt2">' +
+          esc(c.nome.slice(0, 13)) +
+          "</text>"
+        );
+      })
+      .join("");
+    $("#dCateg").innerHTML =
+      '<svg class="bubbles" viewBox="0 0 320 185" role="img" aria-label="Principais categorias">' +
+      bolhas +
+      "</svg>" +
+      '<div class="stack">' +
+      cats
+        .slice(0, 3)
+        .map(
+          (c, i) =>
+            '<i style="width:' +
+            ((c.v / tot) * 100).toFixed(1) +
+            "%;background:" +
+            cor[i] +
+            '"></i>',
+        )
+        .join("") +
+      '</div><div class="legend">' +
+      cats
+        .slice(0, 3)
+        .map(
+          (c, i) =>
+            '<span><i class="dot" style="background:' +
+            cor[i] +
+            '"></i> ' +
+            esc(c.nome) +
+            " · " +
+            ((c.v / tot) * 100).toFixed(0) +
+            "%</span>",
+        )
+        .join("") +
+      "</div>";
+  }
+  /** Carrega notas, financeiro e ordens do GitHub em segundo plano (quando não há senha). */
+  async function carregarTudo() {
+    try {
+      await ghLoad();
+      persist();
+      await finLoad();
+      persistFin();
+      await osLoad();
+      persistOs();
+      markSync(true);
+    } catch (e) {
+      markSync(false);
+    }
+    renderHome();
+  }
+
+  /* ================= Ordem de serviço ================= */
+  /* Dados do cabeçalho da ordem (altere aqui se mudar a empresa) */
+  const OS_EMPRESA = {
+    nome: "AXION MOTORHOME",
+    slogan: "Tecnologia para sistemas embarcados e energia",
+    razao: "66.730.393 FILIPE LOPES ALVES",
+    cnpj: "CNPJ 66.730.393/0001-05",
+  };
+  const OS_STATUS_TXT = {
+    aberta: "🛠 Aberta",
+    concluida: "✔️ Concluída",
+    paga: "✅ Paga",
+  };
+  const OS_PAGAMENTOS = [
+    "A definir",
+    "Pix",
+    "Dinheiro",
+    "Cartão de débito",
+    "Cartão de crédito",
+    "Transferência",
+    "Boleto",
+  ];
+  const LS_OS = "axion_nfse_os";
+  const OS_PATH = "ordens.json"; // 3º banco de dados, no mesmo repositório privado
+  let os = [];
+  try {
+    os = JSON.parse(lsGet(LS_OS) || "[]");
+  } catch (e) {
+    os = [];
+  }
+  if (!Array.isArray(os) || isProt()) {
+    os = [];
+    try {
+      localStorage.removeItem(LS_OS);
+    } catch (e) {}
+  }
+  let osSha = null,
+    osDraft = null,
+    osAtual = null;
+  const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+  /** Número da OS com 5 dígitos: 00020. */
+  const osNum = (o) => String(o.numero).padStart(5, "0");
+  /** Próximo número livre de ordem de serviço. */
+  function osProximo() {
+    return os.reduce((m, o) => Math.max(m, parseInt(o.numero, 10) || 0), 0) + 1;
+  }
+  /** Lê horas digitadas: "1,5", "2" ou "1h30". */
+  function parseHoras(s) {
+    s = String(s || "")
+      .trim()
+      .toLowerCase();
+    const m = s.match(/^(\d+)\s*h\s*(\d{1,2})?\s*(?:min|m)?$/);
+    if (m) return +m[1] + (+m[2] || 0) / 60;
+    const v = parseValor(s);
+    return v > 0 ? v : 0;
+  }
+  /** Horas decimais em texto: 5.6667 -> "5h40". */
+  function fmtHoras(h) {
+    const t = Math.round(h * 60),
+      H = Math.floor(t / 60),
+      M = t % 60;
+    return H + "h" + (M ? pad2(M) : "");
+  }
+  const fmtNum = (n) => (n ? String(r2(n)).replace(".", ",") : "");
+  /** Total de um serviço: horas × valor/hora, ou valor fixo. */
+  function osServTotal(s) {
+    return s.modo === "fixo" ? r2(s.valor) : r2(s.horas * s.vh);
+  }
+  /** Totais da ordem: produtos, serviços, horas, desconto e total geral. */
+  function osTotals(o) {
+    const prod = (o.prods || []).reduce((a, p) => a + r2(p.qtd * p.valor), 0);
+    const serv = (o.servs || []).reduce((a, s) => a + osServTotal(s), 0);
+    const horas = (o.servs || [])
+      .filter((s) => s.modo === "hora")
+      .reduce((a, s) => a + s.horas, 0);
+    const desc = Math.min(r2(o.desconto || 0), r2(prod + serv));
+    return {
+      prod: r2(prod),
+      serv: r2(serv),
+      horas: horas,
+      desc: desc,
+      total: r2(prod + serv - desc),
+    };
+  }
+
+  /* ----- GitHub: ordens.json ----- */
+  /** Guarda o cache local das ordens (desligado quando o token tem senha). */
+  function persistOs() {
+    if (isProt()) {
+      try {
+        localStorage.removeItem(LS_OS);
+      } catch (e) {}
+    } else lsSet(LS_OS, JSON.stringify(os));
+  }
+  const osUrl = (c) =>
+    "https://api.github.com/repos/" + c.repo + "/contents/" + OS_PATH;
+  /** Baixa as ordens do GitHub (arquivo novo = lista vazia). */
+  async function osLoad() {
+    const c = cfg();
+    if (!c.repo || !c.token) return false;
+    const r = await fetch(osUrl(c) + "?t=" + Date.now(), {
+      headers: ghHead(c),
+      cache: "no-store",
+    });
+    if (r.status === 404) {
+      osSha = null;
+      return true;
+    }
+    if (!r.ok) throw new Error(ghErr(r.status));
+    const j = await r.json();
+    osSha = j.sha;
+    const raw = b64dec(j.content || "").trim();
+    let arr = [];
+    if (raw) {
+      try {
+        arr = JSON.parse(raw);
+      } catch (e) {
+        throw new Error(
+          "o arquivo " +
+            OS_PATH +
+            " não é um JSON válido. Apague-o no GitHub e tente de novo",
+        );
+      }
+    }
+    os = Array.isArray(arr) ? arr : [];
+    return true;
+  }
+  /** Envia as ordens para o GitHub. */
+  async function osPush(msg) {
+    const c = cfg();
+    const body = { message: msg, content: b64enc(JSON.stringify(os, null, 1)) };
+    if (osSha) body.sha = osSha;
+    const r = await fetch(osUrl(c), {
+      method: "PUT",
+      headers: Object.assign({ "Content-Type": "application/json" }, ghHead(c)),
+      body: JSON.stringify(body),
+    });
+    if (r.status === 409 || r.status === 422) {
+      const e = new Error("conflito");
+      e.conflict = true;
+      throw e;
+    }
+    if (!r.ok) throw new Error(ghErr(r.status));
+    osSha = (await r.json()).content.sha;
+  }
+  /** Aplica uma alteração nas ordens e sincroniza (GitHub ou só neste aparelho). */
+  async function osSync(mut, okMsg, commitMsg) {
+    if (isProt() && !(await ensureUnlocked())) {
+      setSync("⚠️ Não salvo: senha não informada.");
+      return false;
+    }
+    const c = cfg();
+    const fim = () => {
+      renderOsList();
+      renderHome();
+    };
+    if (!(c.repo && c.token)) {
+      mut(os);
+      persistOs();
+      setSync(
+        "💾 " +
+          okMsg +
+          " (somente neste aparelho). Toque em ⚙️ para guardar no GitHub.",
+      );
+      fim();
+      return true;
+    }
+    for (let t = 0; t < 2; t++) {
+      let applied = false;
+      try {
+        await osLoad();
+        mut(os);
+        applied = true;
+        persistOs();
+        await osPush(commitMsg);
+        setSync("✅ " + okMsg + " no GitHub (" + c.repo + ")");
+        markSync(true);
+        fim();
+        return true;
+      } catch (e) {
+        if (e && e.conflict && t === 0) continue;
+        if (!applied) mut(os);
+        persistOs();
+        markSync(false);
+        setSync(
+          isProt()
+            ? "⚠️ Não salvou no GitHub: " +
+                ((e && e.message) || e) +
+                ". Tente de novo."
+            : "⚠️ " +
+                okMsg +
+                " só neste aparelho. GitHub: " +
+                ((e && e.message) || e),
+        );
+        fim();
+        return false;
+      }
+    }
+  }
+
+  /* ----- Lista de ordens ----- */
+  /** Desenha a lista de ordens de serviço, com busca e resumo. */
+  function renderOsList() {
+    const box = $("#os_items");
+    if (!box) return;
+    const q = (($("#os_q") && $("#os_q").value) || "").toLowerCase().trim();
+    const arr = os
+      .filter(
+        (o) =>
+          !q ||
+          (
+            osNum(o) +
+            " " +
+            o.cliente +
+            " " +
+            (o.veiculo || "") +
+            " " +
+            (o.placa || "")
+          )
+            .toLowerCase()
+            .includes(q),
+      )
+      .sort(
+        (x, y) => (parseInt(y.numero, 10) || 0) - (parseInt(x.numero, 10) || 0),
+      );
+    const soma = (st) =>
+      os
+        .filter((o) => o.status === st)
+        .reduce((a, o) => a + osTotals(o).total, 0);
+    $("#os_sum").innerHTML =
+      '<div class="fcards"><div class="fcard"><span>🛠 Abertas</span><b>' +
+      brl(soma("aberta")) +
+      "</b></div>" +
+      '<div class="fcard"><span>✔️ A receber</span><b>' +
+      brl(soma("concluida")) +
+      "</b></div>" +
+      '<div class="fcard pos"><span>✅ Pagas</span><b>' +
+      brl(soma("paga")) +
+      "</b></div></div>";
+    box.innerHTML = arr.length
+      ? arr
+          .map((o) => {
+            const T = osTotals(o),
+              id = esc(o.id);
+            const cls =
+              o.status === "paga"
+                ? "ok"
+                : o.status === "concluida"
+                  ? "info"
+                  : "wait";
+            return (
+              '<div class="item" data-osopen="' +
+              id +
+              '"><div style="flex:1;min-width:0"><div class="nm">OS ' +
+              osNum(o) +
+              " · " +
+              esc(o.cliente) +
+              '</div><div class="sb">' +
+              esc(
+                [o.veiculo, dataBR(o.data), brl(T.total)]
+                  .filter(Boolean)
+                  .join(" · "),
+              ) +
+              "</div>" +
+              '<div class="acts"><button class="badge ' +
+              cls +
+              '" data-osst="' +
+              id +
+              '">' +
+              OS_STATUS_TXT[o.status || "aberta"] +
+              "</button>" +
+              '<button class="badge" data-osedit="' +
+              id +
+              '">✏️ Editar</button></div></div>' +
+              '<button class="x" data-osdel="' +
+              id +
+              '" aria-label="Excluir ordem">🗑</button></div>'
+            );
+          })
+          .join("")
+      : '<div class="small" style="margin-top:12px">Nenhuma ordem ainda. Toque em “Nova OS”.</div>';
+  }
+  /** Abre a lista de ordens (pede a senha e sincroniza, se preciso). */
+  async function showOs() {
+    if (isProt() && !(await ensureUnlocked())) {
+      say("🔒 Senha necessária para abrir as ordens de serviço.", true);
+      return;
+    }
+    hideAll();
+    $("#oslist").hidden = false;
+    renderOsList();
+    window.scrollTo({ top: 0 });
+    const c = cfg();
+    if (c.repo && c.token) {
+      setSync("Sincronizando…");
+      try {
+        await osLoad();
+        persistOs();
+        markSync(true);
+        setSync("✅ Sincronizado com " + c.repo);
+      } catch (e) {
+        markSync(false);
+        setSync(
+          "⚠️ Não sincronizou: " +
+            ((e && e.message) || e) +
+            ". Mostrando os dados deste aparelho.",
+        );
+      }
+      renderOsList();
+      renderHome();
+    } else
+      setSync(
+        "💾 Dados guardados só neste aparelho. Toque em ⚙️ para guardar no GitHub.",
+      );
+  }
+
+  /* ----- Editor da ordem (produtos e serviços por hora ou valor fixo) ----- */
+  /** Linha de um produto: nome, quantidade e valor unitário. */
+  function rowProd(p, i) {
+    return (
+      '<div class="osrow" data-k="p" data-i="' +
+      i +
+      '"><input class="o-nome" type="text" placeholder="Nome do produto" autocomplete="off" value="' +
+      esc(p.nome) +
+      '" /><div class="osrow-n">' +
+      '<label>Qtd<input class="o-qtd" type="text" inputmode="decimal" value="' +
+      fmtNum(p.qtd) +
+      '" /></label>' +
+      '<label>Valor unit. (R$)<input class="o-val" type="text" inputmode="decimal" placeholder="0,00" value="' +
+      fmtNum(p.valor) +
+      '" /></label>' +
+      '<div class="o-tot">' +
+      brl(r2(p.qtd * p.valor)) +
+      "</div></div>" +
+      '<button class="x o-del" type="button" aria-label="Remover produto">🗑</button></div>'
+    );
+  }
+  /** Linha de um serviço: por hora (horas × valor/hora) ou valor fixo. */
+  function rowServ(s, i) {
+    return (
+      '<div class="osrow" data-k="s" data-i="' +
+      i +
+      '" data-modo="' +
+      s.modo +
+      '"><input class="o-nome" type="text" placeholder="Nome do serviço" autocomplete="off" value="' +
+      esc(s.nome) +
+      '" /><div class="osrow-n"><label>Cobrança<select class="o-modo"><option value="hora"' +
+      (s.modo === "hora" ? " selected" : "") +
+      '>Por hora</option><option value="fixo"' +
+      (s.modo === "fixo" ? " selected" : "") +
+      ">Valor fixo</option></select></label>" +
+      '<label class="l-h">Horas<input class="o-h" type="text" inputmode="decimal" placeholder="1,5 ou 1h30" value="' +
+      (s.horas ? esc(fmtHoras(s.horas)) : "") +
+      '" /></label>' +
+      '<label class="l-vh">Valor/hora (R$)<input class="o-vh" type="text" inputmode="decimal" placeholder="0,00" value="' +
+      fmtNum(s.vh) +
+      '" /></label>' +
+      '<label class="l-v">Valor (R$)<input class="o-val" type="text" inputmode="decimal" placeholder="0,00" value="' +
+      fmtNum(s.valor) +
+      '" /></label><div class="o-tot">' +
+      brl(osServTotal(s)) +
+      "</div></div>" +
+      '<button class="x o-del" type="button" aria-label="Remover serviço">🗑</button></div>'
+    );
+  }
+  /** Redesenha as linhas de produtos e serviços do rascunho. */
+  function osLinhas() {
+    $("#os_prods").innerHTML =
+      osDraft.prods.map(rowProd).join("") ||
+      '<div class="small">Nenhum produto adicionado.</div>';
+    $("#os_servs").innerHTML =
+      osDraft.servs.map(rowServ).join("") ||
+      '<div class="small">Nenhum serviço adicionado.</div>';
+  }
+  /** Totais do rascunho, atualizados a cada digitação. */
+  function osAtualizarTotais() {
+    const T = osTotals(osDraft);
+    $("#os_tot").innerHTML =
+      '<div class="row"><span>Produtos</span><b>' +
+      brl(T.prod) +
+      "</b></div>" +
+      '<div class="row"><span>Serviços (mão de obra)' +
+      (T.horas ? " · " + fmtHoras(T.horas) : "") +
+      "</span><b>" +
+      brl(T.serv) +
+      "</b></div>" +
+      (T.desc
+        ? '<div class="row"><span>Desconto</span><b>− ' +
+          brl(T.desc) +
+          "</b></div>"
+        : "") +
+      '<div class="row total"><span>TOTAL GERAL</span><b>' +
+      brl(T.total) +
+      "</b></div>";
+  }
+  /** Abre o editor com uma ordem nova ou existente. */
+  function osEditor(o) {
+    osDraft = o
+      ? JSON.parse(JSON.stringify(o))
+      : {
+          id: novoId(),
+          numero: osProximo(),
+          data: hojeISO(),
+          cliente: "",
+          tel: "",
+          veiculo: "",
+          placa: "",
+          status: "aberta",
+          prods: [],
+          servs: [],
+          desconto: 0,
+          pagamento: "A definir",
+          obs: "",
+          criadoEm: Date.now(),
+        };
+    hideAll();
+    $("#oseditor").hidden = false;
+    $("#os_title").textContent = o
+      ? "Editar OS " + osNum(o)
+      : "Nova ordem de serviço";
+    $("#os_pag").innerHTML = OS_PAGAMENTOS.map(
+      (p) => "<option>" + p + "</option>",
+    ).join("");
+    const v = osDraft;
+    $("#os_cliente").value = v.cliente;
+    $("#os_tel").value = v.tel || "";
+    $("#os_veic").value = v.veiculo || "";
+    $("#os_placa").value = v.placa || "";
+    $("#os_data").value = v.data;
+    $("#os_num").value = v.numero;
+    $("#os_status").value = v.status || "aberta";
+    $("#os_desc").value = fmtNum(v.desconto);
+    $("#os_pag").value = v.pagamento || "A definir";
+    $("#os_obs").value = v.obs || "";
+    $("#os_err").textContent = "";
+    osLinhas();
+    osAtualizarTotais();
+    window.scrollTo({ top: 0 });
+  }
+  /** Valida e salva a ordem do editor. */
+  async function osSalvar() {
+    const d = osDraft,
+      erro = (t) => {
+        $("#os_err").textContent = t;
+      };
+    d.prods = d.prods.filter((p) => p.nome.trim() || p.valor > 0);
+    d.servs = d.servs.filter((s) => s.nome.trim() || osServTotal(s) > 0);
+    const num = parseInt(d.numero, 10);
+    if (!d.cliente.trim()) return erro("Informe o nome do cliente.");
+    if (!d.prods.length && !d.servs.length)
+      return erro("Adicione ao menos um produto ou serviço.");
+    if (
+      d.prods.some((p) => !p.nome.trim()) ||
+      d.servs.some((s) => !s.nome.trim())
+    )
+      return erro("Dê um nome a todos os itens.");
+    if (!(num > 0)) return erro("Informe um número de OS válido.");
+    if (os.some((o) => o.id !== d.id && parseInt(o.numero, 10) === num))
+      return erro(
+        "Já existe a OS " +
+          String(num).padStart(5, "0") +
+          ". Use outro número.",
+      );
+    const rec = JSON.parse(JSON.stringify(d));
+    rec.numero = num;
+    await osSync(
+      (arr) => {
+        const i = arr.findIndex((x) => x.id === rec.id);
+        if (i >= 0) arr[i] = rec;
+        else arr.push(rec);
+      },
+      "OS " + osNum(rec) + " salva",
+      "OS " + osNum(rec) + ": " + rec.cliente,
+    );
+    if (os.some((o) => o.id === rec.id)) osMostrar(rec.id);
+  }
+
+  /* ----- Documento da ordem (tela e PDF) ----- */
+  /** HTML da ordem de serviço no layout do documento (sempre em fundo claro). */
+  function osPaperHtml(o) {
+    const T = osTotals(o);
+    const tabProd = o.prods.length
+      ? '<div class="osp-h">PEÇAS / PRODUTOS</div><table class="osp-t"><thead><tr><th>Descrição</th><th class="r">Qtd</th><th class="r">Valor unit.</th><th class="r">Total</th></tr></thead><tbody>' +
+        o.prods
+          .map(
+            (p) =>
+              "<tr><td>" +
+              esc(p.nome) +
+              '</td><td class="r">' +
+              esc(String(p.qtd).replace(".", ",")) +
+              '</td><td class="r">' +
+              brl(p.valor) +
+              '</td><td class="r">' +
+              brl(r2(p.qtd * p.valor)) +
+              "</td></tr>",
+          )
+          .join("") +
+        '</tbody><tfoot><tr><td colspan="3">Total de peças</td><td class="r">' +
+        brl(T.prod) +
+        "</td></tr></tfoot></table>"
+      : "";
+    const tabServ = o.servs.length
+      ? '<div class="osp-h">SERVIÇOS REALIZADOS</div><table class="osp-t"><thead><tr><th>Descrição</th><th class="r">Horas</th><th class="r">Valor/hora</th><th class="r">Total</th></tr></thead><tbody>' +
+        o.servs
+          .map(
+            (s) =>
+              "<tr><td>" +
+              esc(s.nome) +
+              '</td><td class="r">' +
+              (s.modo === "hora" ? esc(fmtHoras(s.horas)) : "—") +
+              '</td><td class="r">' +
+              (s.modo === "hora" ? brl(s.vh) : "—") +
+              '</td><td class="r">' +
+              brl(osServTotal(s)) +
+              "</td></tr>",
+          )
+          .join("") +
+        '</tbody><tfoot><tr><td colspan="3">Mão de obra</td><td class="r">' +
+        brl(T.serv) +
+        "</td></tr></tfoot></table>"
+      : "";
+    const meta = [
+      o.veiculo ? "Veículo/modelo: " + esc(o.veiculo) : "",
+      o.placa ? "Placa: " + esc(o.placa) : "",
+      o.tel ? "Contato: " + esc(o.tel) : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    return (
+      '<div class="osp-head"><div><div class="osp-name">' +
+      esc(OS_EMPRESA.nome) +
+      '</div><div class="osp-slogan">' +
+      esc(OS_EMPRESA.slogan) +
+      '</div><div class="osp-razao">' +
+      esc(OS_EMPRESA.razao) +
+      "<br>" +
+      esc(OS_EMPRESA.cnpj) +
+      '</div></div><img class="osp-logo" alt="" src="' +
+      LOGO +
+      '" /></div><div class="osp-stripe"></div>' +
+      '<div class="osp-body"><div class="osp-title"><span>ORDEM DE SERVIÇO</span><b>Nº ' +
+      osNum(o) +
+      "</b></div>" +
+      '<div class="osp-client"><div><label>CLIENTE</label><strong>' +
+      esc(o.cliente) +
+      "</strong></div><div><label>DATA</label><span>" +
+      dataBR(o.data) +
+      "</span></div>" +
+      (meta ? '<div class="full">' + meta + "</div>" : "") +
+      "</div>" +
+      tabProd +
+      tabServ +
+      '<div class="osp-line"></div><div class="osp-sum"><span>Tempo de serviço: ' +
+      (T.horas ? fmtHoras(T.horas) : "—") +
+      "</span><span>Mão de obra: " +
+      brl(T.serv) +
+      "</span></div>" +
+      (T.desc
+        ? '<div class="osp-sum"><span>Desconto</span><span>− ' +
+          brl(T.desc) +
+          "</span></div>"
+        : "") +
+      '<div class="osp-total"><span>TOTAL GERAL</span><b>' +
+      brl(T.total) +
+      "</b></div>" +
+      '<div class="osp-foot">Forma de pagamento: ' +
+      esc(o.pagamento || "a definir") +
+      "</div>" +
+      '<div class="osp-foot">Observações: ' +
+      (o.obs ? esc(o.obs) : '<span class="osp-ul"></span>') +
+      "</div></div>"
+    );
+  }
+  /** Ajusta a escala do documento à largura da tela. */
+  function fitOs() {
+    const p = $("#ospaper"),
+      w = $("#osfit");
+    if (!w || $("#osview").hidden) return;
+    const s = Math.min(1, (w.clientWidth - 12) / 794);
+    p.style.transform = "scale(" + s + ")";
+    w.style.height = p.offsetHeight * s + 8 + "px";
+  }
+  window.addEventListener("resize", fitOs);
+  /** Mostra uma ordem de serviço como documento. */
+  function osMostrar(id) {
+    const o = os.find((x) => x.id === id);
+    if (!o) return;
+    osAtual = o;
+    hideAll();
+    $("#osview").hidden = false;
+    $("#ospaper").innerHTML = osPaperHtml(o);
+    fitOs();
+    window.scrollTo({ top: 0 });
+  }
+  /** Gera o PDF da ordem (várias páginas, se for longa). */
+  async function osGerarPdf() {
+    const canvas = await html2canvas($("#ospaper"), {
+      scale: 2,
+      backgroundColor: "#ffffff",
+      useCORS: true,
+      onclone: (doc) => {
+        doc.getElementById("ospaper").style.transform = "none";
+        const w = doc.getElementById("osfit");
+        w.style.height = "auto";
+        w.style.overflow = "visible";
+        w.style.padding = "0";
+        w.style.maxWidth = "none";
+      },
+    });
+    const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
+    const W = 210,
+      H = (canvas.height * W) / canvas.width,
+      img = canvas.toDataURL("image/jpeg", 0.95);
+    for (let y = 0, pg = 0; y < H - 0.5; y += 297, pg++) {
+      if (pg) pdf.addPage();
+      pdf.addImage(img, "JPEG", 0, -y, W, H);
+    }
+    return pdf.output("blob");
+  }
+  const osArquivo = (o) =>
+    "OS-" +
+    osNum(o) +
+    "-" +
+    String(o.cliente)
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[^A-Za-z0-9]/g, "")
+      .slice(0, 14) +
+    ".pdf";
+  /** Lança o total da ordem no financeiro (PJ ou PF, como entrada). */
+  async function lancarOs(id) {
+    const o = os.find((x) => x.id === id);
+    if (!o) return;
+    const T = osTotals(o);
+    const r = await askText({
+      titulo: "💸 Lançar OS " + osNum(o) + " · " + brl(T.total),
+      semTexto: true,
+      botoes: [
+        { id: "PJ", rotulo: "🏢 PJ · Entrada (receita)" },
+        { id: "PF", rotulo: "👤 PF · Entrada (receita)" },
+        { id: "cancelar", rotulo: "Cancelar", sec: true },
+      ],
+    });
+    if (r.acao === "cancelar") return;
+    const rec = {
+      id: novoId(),
+      ledger: r.acao,
+      tipo: "entrada",
+      nome: "OS " + osNum(o) + " · " + o.cliente,
+      valor: T.total,
+      data: o.data || hojeISO(),
+      cat: "Serviço",
+      pago: o.status === "paga",
+      rec: false,
+      osId: o.id,
+      criadoEm: Date.now(),
+    };
+    let dup = false;
+    await finSync(
+      (arr) => {
+        if (arr.some((x) => x.osId === o.id && x.ledger === r.acao)) dup = true;
+        else arr.push(rec);
+      },
+      "OS lançada no " + r.acao,
+      "Lançar OS " + osNum(o) + " no " + r.acao,
+    );
+    if (dup) {
+      say("Esta ordem já foi lançada no " + r.acao + ".", true);
+      return;
+    }
+    finMes = rec.data.slice(0, 7);
+    finLedger = r.acao;
+    await oferecerReplica(rec);
+  }
+
+  /* ----- Eventos da Ordem de serviço ----- */
+  $("#os_new").addEventListener("click", () => osEditor(null));
+  $("#os_q").addEventListener("input", renderOsList);
+  $("#os_addp").addEventListener("click", () => {
+    osDraft.prods.push({ nome: "", qtd: 1, valor: 0 });
+    osLinhas();
+    osAtualizarTotais();
+  });
+  $("#os_adds").addEventListener("click", () => {
+    osDraft.servs.push({ nome: "", modo: "hora", horas: 0, vh: 0, valor: 0 });
+    osLinhas();
+    osAtualizarTotais();
+  });
+  $("#os_save").addEventListener("click", osSalvar);
+  $("#os_cancel").addEventListener("click", () =>
+    os.some((o) => o.id === osDraft.id) ? osMostrar(osDraft.id) : showOs(),
+  );
+  $("#os_edit").addEventListener("click", () => osAtual && osEditor(osAtual));
+  $("#os_launch").addEventListener(
+    "click",
+    () => osAtual && lancarOs(osAtual.id),
+  );
+  $("#os_pdf").addEventListener("click", async () => {
+    if (!osAtual) return;
+    say("Gerando PDF…");
+    try {
+      await saveBlob(await osGerarPdf(), osArquivo(osAtual));
+      say("PDF salvo.");
+    } catch (e) {
+      say("Erro ao gerar o PDF: " + ((e && e.message) || e), true);
+    }
+  });
+  $("#os_share").addEventListener("click", async () => {
+    if (!osAtual) return;
+    say("Preparando o PDF para compartilhar…");
+    try {
+      const blob = await osGerarPdf(),
+        file = new File([blob], osArquivo(osAtual), {
+          type: "application/pdf",
+        });
+      const texto =
+        "Ordem de serviço " +
+        osNum(osAtual) +
+        " · " +
+        osAtual.cliente +
+        " · " +
+        brl(osTotals(osAtual).total);
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "OS " + osNum(osAtual),
+          text: texto,
+        });
+        say("Compartilhado.");
+      } else {
+        await saveBlob(blob, osArquivo(osAtual));
+        say(
+          "Este navegador não compartilha arquivos. O PDF foi baixado: anexe-o na conversa.",
+          true,
+        );
+        const tel = String(osAtual.tel || "").replace(/\D/g, "");
+        abrir(
+          "https://wa.me/" +
+            (tel.length >= 10 ? (tel.length <= 11 ? "55" + tel : tel) : "") +
+            "?text=" +
+            encodeURIComponent(texto),
+        );
+      }
+    } catch (e) {
+      if (e && e.name === "AbortError") say("Compartilhamento cancelado.");
+      else say("Erro ao compartilhar: " + ((e && e.message) || e), true);
+    }
+  });
+  /* digitação no editor: atualiza o rascunho e os totais na hora */
+  $("#oseditor").addEventListener("input", (ev) => {
+    const t = ev.target,
+      row = t.closest(".osrow");
+    if (row) {
+      const it = (row.dataset.k === "p" ? osDraft.prods : osDraft.servs)[
+        +row.dataset.i
+      ];
+      if (!it) return;
+      if (t.classList.contains("o-nome")) it.nome = t.value;
+      else if (t.classList.contains("o-qtd")) it.qtd = parseValor(t.value) || 0;
+      else if (t.classList.contains("o-val"))
+        it.valor = parseValor(t.value) || 0;
+      else if (t.classList.contains("o-h")) it.horas = parseHoras(t.value);
+      else if (t.classList.contains("o-vh")) it.vh = parseValor(t.value) || 0;
+      else if (t.classList.contains("o-modo")) {
+        it.modo = t.value;
+        row.dataset.modo = t.value;
+      }
+      const tot = row.querySelector(".o-tot");
+      if (tot)
+        tot.textContent = brl(
+          row.dataset.k === "p" ? r2(it.qtd * it.valor) : osServTotal(it),
+        );
+    } else {
+      const map = {
+        os_cliente: "cliente",
+        os_tel: "tel",
+        os_veic: "veiculo",
+        os_placa: "placa",
+        os_data: "data",
+        os_num: "numero",
+        os_status: "status",
+        os_pag: "pagamento",
+        os_obs: "obs",
+      };
+      if (map[t.id]) osDraft[map[t.id]] = t.value;
+      else if (t.id === "os_desc") osDraft.desconto = parseValor(t.value) || 0;
+    }
+    osAtualizarTotais();
+  });
+  $("#oseditor").addEventListener("change", (ev) => {
+    if (ev.target.matches("select"))
+      ev.target.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  $("#oseditor").addEventListener("click", (ev) => {
+    const b = ev.target.closest(".o-del");
     if (!b) return;
-    const go = b.getAttribute("data-go");
-    if (go === "nota") openPicker();
-    else if (go === "fin") showFin();
-    else if (go === "rel") showRep();
-    else if (go === "notas") showList();
-    else if (go === "cfg") $("#cfgbtn").click();
+    const row = b.closest(".osrow");
+    (row.dataset.k === "p" ? osDraft.prods : osDraft.servs).splice(
+      +row.dataset.i,
+      1,
+    );
+    osLinhas();
+    osAtualizarTotais();
+  });
+  $("#os_items").addEventListener("click", async (ev) => {
+    const st = ev.target.closest("[data-osst]");
+    if (st) {
+      ev.stopPropagation();
+      const id = st.getAttribute("data-osst"),
+        ordem = ["aberta", "concluida", "paga"];
+      await osSync(
+        (arr) => {
+          const x = arr.find((y) => y.id === id);
+          if (x)
+            x.status = ordem[(ordem.indexOf(x.status || "aberta") + 1) % 3];
+        },
+        "Situação atualizada",
+        "OS situação " + id,
+      );
+      return;
+    }
+    const ed = ev.target.closest("[data-osedit]");
+    if (ed) {
+      ev.stopPropagation();
+      const o = os.find((x) => x.id === ed.getAttribute("data-osedit"));
+      if (o) osEditor(o);
+      return;
+    }
+    const dl = ev.target.closest("[data-osdel]");
+    if (dl) {
+      ev.stopPropagation();
+      const id = dl.getAttribute("data-osdel"),
+        o = os.find((x) => x.id === id);
+      let ok = true;
+      try {
+        ok = confirm("Excluir a OS " + (o ? osNum(o) : "") + "?");
+      } catch (e) {}
+      if (ok)
+        await osSync(
+          (arr) => {
+            const i = arr.findIndex((y) => y.id === id);
+            if (i >= 0) arr.splice(i, 1);
+          },
+          "Ordem excluída",
+          "Excluir OS " + id,
+        );
+      return;
+    }
+    const op = ev.target.closest("[data-osopen]");
+    if (op) osMostrar(op.getAttribute("data-osopen"));
+  });
+  /* busca da barra superior (computador): abre Minhas notas já filtrada */
+  $("#gsearch").addEventListener("keydown", async (ev) => {
+    if (ev.key !== "Enter") return;
+    const v = ev.target.value;
+    await showList();
+    $("#q").value = v;
+    refreshList();
   });
 
   /* ---------- Inicialização ---------- */
   renderHome();
+  if (!isProt() && cfg().repo && cfg().token) carregarTudo();
   updateSyncLabel();
   // Avisa se alguma biblioteca externa não carregou (internet ou bloqueio de segurança)
   const faltando = [];

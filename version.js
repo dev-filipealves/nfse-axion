@@ -75,7 +75,7 @@
 
 /* Confere se o index.html, o app.js e o version.js são da mesma publicação */
 window.addEventListener("load", function () {
-  var ESPERADO = "2026-11-04.3";
+  var ESPERADO = "2026-11-07.1";
   if (window.AXION_BUILD === ESPERADO) return;
   var m = document.getElementById("msg");
   if (m) {

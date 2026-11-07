@@ -16,7 +16,7 @@
       content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'"
     />
     <meta name="referrer" content="no-referrer" />
-    <link rel="stylesheet" href="styles.css?v=2026-11-04.3" />
+    <link rel="stylesheet" href="styles.css?v=2026-11-07.1" />
     <style>
       /* Rodapé fixo: sempre visível, sem precisar rolar a página */
       body {
@@ -54,386 +54,794 @@
     </style>
   </head>
   <body>
-    <div class="bar">
-      <h1>
-        AXION
-        <small>
-          <span class="sn sn-notas">📚 Minhas notas</span>
-          <span class="sn sn-fin">💰 Financeiro</span>
-          <span class="sn sn-rel">📊 Relatórios</span>
-          <span class="sn sn-cfg">⚙️ Configurações</span>
-        </small>
-      </h1>
-      <div class="corner">
-        <button class="btn sec" id="cancel">← Voltar</button>
-      </div>
-
-      <!-- Atalhos escondidos: o painel inicial usa esses botões -->
-      <button class="btn sec" id="listbtn" hidden>📚 Minhas notas</button>
-      <button class="btn sec" id="repbtn" hidden>📊 Relatórios</button>
-      <button class="btn sec" id="finbtn" hidden>💰 Financeiro</button>
-      <button class="btn sec" id="cfgbtn" hidden>⚙️ Configurações</button>
-
-      <!-- Ferramentas de cada área: só a barra da área aberta aparece -->
-      <div class="btns tb" id="tb-notas">
-        <button class="btn pickbtn" type="button">📄 Enviar nota</button>
-        <button class="btn sec" id="dl" disabled>⬇️ Baixar PDF</button>
-        <button class="btn sec" id="sharebtn" disabled>📤 Compartilhar</button>
-        <button class="btn sec" id="launchbtn" disabled>💸 Lançar</button>
-      </div>
-      <div class="btns tb" id="tb-fin">
-        <button class="btn sec" id="f_add_e">
-          <svg
-            class="ic ic-in"
-            viewBox="0 0 24 24"
-            width="20"
-            height="20"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 8v8M8.5 12.5 12 16l3.5-3.5" />
-          </svg>
-          Entrada
-        </button>
-        <button class="btn sec" id="f_add_d">
-          <svg
-            class="ic ic-out"
-            viewBox="0 0 24 24"
-            width="20"
-            height="20"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 16V8M8.5 11.5 12 8l3.5 3.5" />
-          </svg>
-          Despesa
-        </button>
-        <button class="btn sec" id="f_rep">🔁 Repetir recorrentes</button>
-        <button class="btn sec" id="f_diz">💡 Dízimo 10%</button>
-      </div>
-    </div>
-    <div id="msg"></div>
-    <div id="empty">
-      <!-- Tela inicial: painel com quadrados -->
-      <header class="home-head">
-        <img id="logoEmpty" alt="Logo AXION" width="56" height="56" />
-        <div>
-          <div class="home-hi" id="homeHi">Olá!</div>
-          <div class="home-title">AXION</div>
-          <div class="home-sub">Sistemas Embarcados e Energia</div>
-        </div>
-      </header>
-
-      <button class="hero" data-go="rel" type="button">
-        <span class="hero-left">
-          <span class="hero-tag">VISÃO GERAL</span>
-          <span class="hero-main" id="hMes">R$ 0,00</span>
-          <span class="hero-sub" id="hSub">faturado no mês</span>
-          <span class="hero-go">📊 Ver relatórios ›</span>
-        </span>
-        <span class="hero-right">
-          <span class="hero-pct" id="hPct">0%</span>
-          <span class="hero-cap">do limite anual do MEI</span>
-        </span>
-      </button>
-
-      <div class="home-sec">
-        <span>FERRAMENTAS</span><span class="home-pill">5</span>
-      </div>
-      <div class="tiles">
-        <button class="tile t-blue" data-go="nota" type="button">
-          <span class="ico">
-            <svg
-              viewBox="0 0 24 24"
-              width="26"
-              height="26"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path
-                d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"
-              />
-              <path d="M14 3v5h5" />
-              <path d="M12 12v6M9 15h6" />
-            </svg>
-          </span>
-          <span class="tt">Lançar nota</span>
-          <span class="ts">Enviar o PDF da NFS-e</span>
-        </button>
-        <button class="tile t-indigo" data-go="notas" type="button">
-          <span class="ico">
-            <svg
-              viewBox="0 0 24 24"
-              width="26"
-              height="26"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path
-                d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"
-              />
-              <path
-                d="M13 4h5.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H13z"
-              />
-            </svg>
-          </span>
-          <span class="tt">Minhas notas</span>
-          <span class="ts">Histórico, busca e cobrança</span>
-        </button>
-        <button class="tile t-green" data-go="fin" type="button">
-          <span class="ico">
-            <svg
-              viewBox="0 0 24 24"
-              width="26"
-              height="26"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M3 7a2 2 0 0 1 2-2h12v4" />
-              <path
-                d="M3 7v11a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2z"
-              />
-              <circle cx="16.5" cy="14.5" r="1.2" />
-            </svg>
-          </span>
-          <span class="tt">Finanças</span>
-          <span class="ts">PJ e PF, mês a mês</span>
-        </button>
-        <button class="tile t-amber" data-go="rel" type="button">
-          <span class="ico">
-            <svg
-              viewBox="0 0 24 24"
-              width="26"
-              height="26"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M4 20h16" />
-              <path d="M7 20V11M12 20V5M17 20v-7" />
-            </svg>
-          </span>
-          <span class="tt">Relatórios</span>
-          <span class="ts">Mês, ano e limite do MEI</span>
-        </button>
-        <button class="tile t-slate wide" data-go="cfg" type="button">
-          <span class="ico">
-            <svg
-              viewBox="0 0 24 24"
-              width="26"
-              height="26"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M4 7h10M18 7h2M4 17h2M10 17h10" />
-              <circle cx="16" cy="7" r="2" />
-              <circle cx="8" cy="17" r="2" />
-            </svg>
-          </span>
-          <span class="tt">Configurações</span>
-          <span class="ts">GitHub e senha</span>
-        </button>
-      </div>
-    </div>
-    <div id="listbox" class="panel" hidden>
-      <h2>Minhas notas</h2>
-      <div class="small">
-        Toque numa nota para abrir e baixar o PDF de novo.
-      </div>
-      <div id="resumo"></div>
-      <input
-        id="q"
-        type="search"
-        placeholder="Buscar por número, data, cliente ou valor"
-        autocomplete="off"
-      />
-      <div class="chips" id="chips">
-        <button class="chip on" data-f="todas">Todas</button
-        ><button class="chip" data-f="receber">⏳ A receber</button
-        ><button class="chip" data-f="recebida">✅ Recebidas</button>
-        <button class="chip" data-f="cancelada">🚫 Canceladas</button>
-      </div>
-      <div id="tot" class="small"></div>
-      <div id="items"></div>
-    </div>
-    <div id="cfgbox" class="panel" hidden>
-      <h2>Guardar notas no GitHub</h2>
-      <div class="small">
-        1) Crie um repositório <b>privado</b> só para os dados (ex.:
-        <b>nfse-dados</b>).<br />2) Em GitHub → Settings → Developer settings →
-        Fine-grained tokens, crie um token apenas para esse repositório, com
-        <b>Contents: Read and write</b>.<br />3) Crie uma <b>senha</b>. O token
-        é criptografado com ela (AES-256) e só abre neste aparelho, depois de
-        você digitar a senha. Se esquecer a senha, é só gerar outro token (não
-        há recuperação).
-      </div>
-      <label for="c_repo">Repositório (usuário/nome)</label
-      ><input
-        id="c_repo"
-        type="text"
-        placeholder="dev-filipealves/nfse-dados"
-        autocomplete="off"
-        autocapitalize="off"
-      />
-      <label for="c_token">Token</label
-      ><input
-        id="c_token"
-        type="password"
-        placeholder="github_pat_..."
-        autocomplete="off"
-      />
-      <label for="c_pass">Senha (mínimo 6 caracteres)</label
-      ><input id="c_pass" type="password" autocomplete="new-password" />
-      <label for="c_pass2">Repita a senha</label
-      ><input id="c_pass2" type="password" autocomplete="new-password" />
-      <label for="c_path">Arquivo do banco</label
-      ><input
-        id="c_path"
-        type="text"
-        placeholder="notas.json"
-        autocomplete="off"
-        autocapitalize="off"
-      />
-      <button class="btn" id="c_save" style="width: 100%">
-        💾 Salvar e testar
-      </button>
-      <button class="btn sec" id="c_clear" style="width: 100%">
-        Remover configuração
-      </button>
-      <button class="btn sec" id="c_back" style="width: 100%">Voltar</button>
-    </div>
-    <div id="repbox" class="panel" hidden>
-      <h2>Relatórios</h2>
-      <label for="r_per">Período</label>
-      <select id="r_per">
-        <option value="mes">Este mês</option>
-        <option value="mesant">Mês anterior</option>
-        <option value="ano">Este ano</option>
-        <option value="anoant">Ano anterior</option>
-        <option value="tudo">Todo o período</option>
-      </select>
-      <div id="r_out"></div>
-      <div class="sect">Exportar</div>
-      <div class="finacts">
-        <button class="btn sec" id="r_csv">⬇️ CSV (Excel)</button>
-        <button class="btn sec" id="r_pdf">⬇️ PDF</button>
-      </div>
-    </div>
-    <div id="finbox" class="panel" hidden>
-      <h2>💰 Financeiro</h2>
-      <div class="chips" id="f_tabs">
-        <button class="chip on" data-l="PJ">🏢 PJ (empresa)</button>
-        <button class="chip" data-l="PF">👤 PF (pessoal)</button>
-      </div>
-      <div class="mesnav">
-        <button class="btn sec" id="f_prev" aria-label="Mês anterior">‹</button>
-        <select id="f_mes" aria-label="Mês"></select>
-        <button class="btn sec" id="f_next" aria-label="Próximo mês">›</button>
-      </div>
-      <div id="f_cur" class="small"></div>
-      <div id="f_sum"></div>
-      <div id="f_lists"></div>
-      <div class="sect">Exportar</div>
-      <div class="finacts">
-        <button class="btn sec" id="f_wpp">📤 WhatsApp</button>
-        <button class="btn sec" id="f_pdf">⬇️ PDF</button>
-        <button class="btn sec" id="f_csv">⬇️ Tabela (CSV)</button>
-      </div>
-    </div>
-    <div id="fmodal" class="modal" hidden>
-      <div
-        class="panel"
-        style="width: 100%; max-width: 420px; max-height: 92vh; overflow: auto"
-      >
-        <h2 id="ftitle"></h2>
-        <label for="fi_nome">Nome</label>
-        <input id="fi_nome" type="text" autocomplete="off" />
-        <label for="fi_valor">Valor (R$)</label>
-        <input
-          id="fi_valor"
-          type="text"
-          inputmode="decimal"
-          placeholder="0,00"
-          autocomplete="off"
-        />
-        <label for="fi_data">Data</label>
-        <input id="fi_data" type="date" />
-        <label for="fi_cat">Categoria</label>
-        <select id="fi_cat"></select>
-        <label class="chk"
-          ><input id="fi_pago" type="checkbox" /><span id="fi_pagolbl"></span
-        ></label>
-        <label class="chk"
-          ><input id="fi_rec" type="checkbox" />Repete todo mês
-          (recorrente)</label
+    <div class="shell">
+      <aside class="rail" aria-label="Navegação">
+        <button
+          class="rail-btn"
+          data-go="home"
+          data-tip="Início"
+          aria-label="Início"
         >
-        <div id="fi_err" class="small" style="color: #d23b3b"></div>
-        <button class="btn" id="fi_save" style="width: 100%">Salvar</button>
-        <button class="btn sec" id="fi_del" style="width: 100%" hidden>
-          🗑 Excluir
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 11.5 12 4l9 7.5" />
+            <path d="M5.5 10v9.5h13V10" />
+          </svg>
         </button>
-        <button class="btn sec" id="fi_cancel" style="width: 100%">
-          Cancelar
+        <button
+          class="rail-btn"
+          data-go="nota"
+          data-tip="Lançar nota"
+          aria-label="Lançar nota"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"
+            />
+            <path d="M14 3v5h5" />
+            <path d="M12 12v6M9 15h6" />
+          </svg>
         </button>
+        <button
+          class="rail-btn"
+          data-go="notas"
+          data-tip="Minhas notas"
+          aria-label="Minhas notas"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"
+            />
+            <path
+              d="M13 4h5.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H13z"
+            />
+          </svg>
+        </button>
+        <button
+          class="rail-btn"
+          data-go="os"
+          data-tip="Ordem de serviço"
+          aria-label="Ordem de serviço"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.1-.6-.6-2.1z"
+            />
+          </svg>
+        </button>
+        <button
+          class="rail-btn"
+          data-go="fin"
+          data-tip="Finanças"
+          aria-label="Finanças"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 7a2 2 0 0 1 2-2h12v4" />
+            <path
+              d="M3 7v11a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2z"
+            />
+            <circle cx="16.5" cy="14.5" r="1.2" />
+          </svg>
+        </button>
+        <button
+          class="rail-btn"
+          data-go="rel"
+          data-tip="Relatórios"
+          aria-label="Relatórios"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 20h16" />
+            <path d="M7 20V11M12 20V5M17 20v-7" />
+          </svg>
+        </button>
+        <span class="rail-sp"></span>
+        <button
+          class="rail-btn"
+          data-go="cfg"
+          data-tip="Configurações"
+          aria-label="Configurações"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 7h10M18 7h2M4 17h2M10 17h10" />
+            <circle cx="16" cy="7" r="2" />
+            <circle cx="8" cy="17" r="2" />
+          </svg>
+        </button>
+      </aside>
+      <div class="main">
+        <header class="topbar">
+          <div class="brand">
+            <img id="logoTop" alt="AXION" width="44" height="44" />
+            <div><b>AXION</b><small>Sistemas Embarcados e Energia</small></div>
+          </div>
+          <label class="search"
+            ><svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="6.5" />
+              <path d="m16 16 4.5 4.5" /></svg
+            ><input
+              id="gsearch"
+              type="search"
+              placeholder="Buscar notas por cliente, número ou valor…"
+              autocomplete="off"
+          /></label>
+          <div class="tb-chips">
+            <span class="pill" id="tbMes">Faturado no mês · R$ 0,00</span>
+            <button class="pill" id="tbPend" data-go="home" type="button">
+              ⏳ 0 pendências
+            </button>
+          </div>
+        </header>
+        <div class="bar">
+          <h1>
+            <span class="brandword">AXION</span>
+            <small>
+              <span class="sn sn-home">Dashboard</span>
+              <span class="sn sn-notas">📚 Minhas notas</span>
+              <span class="sn sn-fin">💰 Financeiro</span>
+              <span class="sn sn-rel">📊 Relatórios</span>
+              <span class="sn sn-os">🛠 Ordem de serviço</span>
+              <span class="sn sn-cfg">⚙️ Configurações</span>
+            </small>
+          </h1>
+          <div class="corner">
+            <button class="btn sec" id="cancel">← Voltar</button>
+          </div>
+
+          <!-- Atalhos escondidos: o painel inicial usa esses botões -->
+          <button class="btn sec" id="listbtn" hidden>📚 Minhas notas</button>
+          <button class="btn sec" id="repbtn" hidden>📊 Relatórios</button>
+          <button class="btn sec" id="finbtn" hidden>💰 Financeiro</button>
+          <button class="btn sec" id="cfgbtn" hidden>⚙️ Configurações</button>
+
+          <!-- Ferramentas de cada área: só a barra da área aberta aparece -->
+          <div class="btns tb" id="tb-notas">
+            <button class="btn pickbtn" type="button">📄 Enviar nota</button>
+            <button class="btn sec" id="dl" disabled>⬇️ Baixar PDF</button>
+            <button class="btn sec" id="sharebtn" disabled>
+              📤 Compartilhar
+            </button>
+            <button class="btn sec" id="launchbtn" disabled>💸 Lançar</button>
+          </div>
+          <div class="btns tb" id="tb-fin">
+            <button class="btn sec" id="f_add_e">
+              <svg
+                class="ic ic-in"
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 8v8M8.5 12.5 12 16l3.5-3.5" />
+              </svg>
+              Entrada
+            </button>
+            <button class="btn sec" id="f_add_d">
+              <svg
+                class="ic ic-out"
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 16V8M8.5 11.5 12 8l3.5 3.5" />
+              </svg>
+              Despesa
+            </button>
+            <button class="btn sec" id="f_rep">🔁 Repetir recorrentes</button>
+            <button class="btn sec" id="f_diz">💡 Dízimo 10%</button>
+          </div>
+          <div class="btns tb" id="tb-os-list">
+            <button class="btn sec" id="os_new">
+              <svg
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path
+                  d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.1-.6-.6-2.1z"
+                />
+              </svg>
+              Nova OS
+            </button>
+          </div>
+          <div class="btns tb" id="tb-os-view">
+            <button class="btn sec" id="os_edit">✏️ Editar</button>
+            <button class="btn sec" id="os_pdf">⬇️ Baixar PDF</button>
+            <button class="btn sec" id="os_share">📤 Compartilhar</button>
+            <button class="btn sec" id="os_launch">💸 Lançar</button>
+          </div>
+        </div>
+        <div id="msg"></div>
+        <div id="empty">
+          <!-- Tela inicial: painel com quadrados -->
+          <header class="home-head">
+            <img id="logoEmpty" alt="Logo AXION" width="56" height="56" />
+            <div>
+              <div class="home-hi" id="homeHi">Olá!</div>
+              <div class="home-title">AXION</div>
+              <div class="home-sub">Sistemas Embarcados e Energia</div>
+            </div>
+          </header>
+
+          <button class="hero" data-go="rel" type="button">
+            <span class="hero-left">
+              <span class="hero-tag">VISÃO GERAL</span>
+              <span class="hero-main" id="hMes">R$ 0,00</span>
+              <span class="hero-sub" id="hSub">faturado no mês</span>
+              <span class="hero-bar"><i id="hBar"></i></span>
+              <span class="hero-go">📊 Ver relatórios ›</span>
+            </span>
+            <span class="hero-right">
+              <span class="hero-pct" id="hPct">0%</span>
+              <span class="hero-cap">do limite anual do MEI</span>
+            </span>
+          </button>
+
+          <div class="home-sec">
+            <span>FERRAMENTAS</span><span class="home-pill">6</span>
+          </div>
+          <div class="tiles">
+            <button class="tile t-blue" data-go="nota" type="button">
+              <span class="ico">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="26"
+                  height="26"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"
+                  />
+                  <path d="M14 3v5h5" />
+                  <path d="M12 12v6M9 15h6" />
+                </svg>
+              </span>
+              <span class="tt">Lançar nota</span>
+              <span class="ts">Enviar o PDF da NFS-e</span>
+            </button>
+            <button class="tile t-indigo" data-go="notas" type="button">
+              <span class="ico">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="26"
+                  height="26"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"
+                  />
+                  <path
+                    d="M13 4h5.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H13z"
+                  />
+                </svg>
+              </span>
+              <span class="tt">Minhas notas</span>
+              <span class="ts">Histórico, busca e cobrança</span>
+            </button>
+            <button class="tile t-green" data-go="fin" type="button">
+              <span class="ico">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="26"
+                  height="26"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M3 7a2 2 0 0 1 2-2h12v4" />
+                  <path
+                    d="M3 7v11a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2z"
+                  />
+                  <circle cx="16.5" cy="14.5" r="1.2" />
+                </svg>
+              </span>
+              <span class="tt">Finanças</span>
+              <span class="ts">PJ e PF, mês a mês</span>
+            </button>
+            <button class="tile t-amber" data-go="rel" type="button">
+              <span class="ico">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="26"
+                  height="26"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M4 20h16" />
+                  <path d="M7 20V11M12 20V5M17 20v-7" />
+                </svg>
+              </span>
+              <span class="tt">Relatórios</span>
+              <span class="ts">Mês, ano e limite do MEI</span>
+            </button>
+            <button class="tile t-teal" data-go="os" type="button">
+              <span class="ico"
+                ><svg
+                  viewBox="0 0 24 24"
+                  width="26"
+                  height="26"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.1-.6-.6-2.1z"
+                  /></svg
+              ></span>
+              <span class="tt">Ordem de serviço</span>
+              <span class="ts">Peças, serviços e horas</span>
+            </button>
+            <button class="tile t-slate" data-go="cfg" type="button">
+              <span class="ico">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="26"
+                  height="26"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M4 7h10M18 7h2M4 17h2M10 17h10" />
+                  <circle cx="16" cy="7" r="2" />
+                  <circle cx="8" cy="17" r="2" />
+                </svg>
+              </span>
+              <span class="tt">Configurações</span>
+              <span class="ts">GitHub e senha</span>
+            </button>
+          </div>
+
+          <section class="dash">
+            <article class="card c-fluxo">
+              <header>
+                <h3>Faturamento mês a mês</h3>
+                <span class="muted" id="dFluxoSub"></span>
+              </header>
+              <div id="dFluxo"></div>
+              <div class="legend">
+                <span><i class="dot d-fil"></i> Faturado</span
+                ><span><i class="dot d-trk"></i> Limite mensal do MEI</span>
+              </div>
+            </article>
+            <article class="card c-ultimas">
+              <header>
+                <h3>Últimas notas</h3>
+                <button class="link" data-go="notas" type="button">
+                  Ver todas ›
+                </button>
+              </header>
+              <div id="dUltimas"></div>
+            </article>
+            <article class="card c-acao">
+              <header>
+                <h3>Ação necessária</h3>
+                <span class="count" id="dAcaoN">0</span>
+              </header>
+              <div id="dAcao"></div>
+            </article>
+            <article class="card c-categ">
+              <header>
+                <h3>Principais categorias</h3>
+                <button class="link" data-go="fin" type="button">
+                  Ver finanças ›
+                </button>
+              </header>
+              <div id="dCateg"></div>
+            </article>
+          </section>
+        </div>
+        <div id="listbox" class="panel" hidden>
+          <h2>Minhas notas</h2>
+          <div class="small">
+            Toque numa nota para abrir e baixar o PDF de novo.
+          </div>
+          <div id="resumo"></div>
+          <input
+            id="q"
+            type="search"
+            placeholder="Buscar por número, data, cliente ou valor"
+            autocomplete="off"
+          />
+          <div class="chips" id="chips">
+            <button class="chip on" data-f="todas">Todas</button
+            ><button class="chip" data-f="receber">⏳ A receber</button
+            ><button class="chip" data-f="recebida">✅ Recebidas</button>
+            <button class="chip" data-f="cancelada">🚫 Canceladas</button>
+          </div>
+          <div id="tot" class="small"></div>
+          <div id="items"></div>
+        </div>
+        <div id="cfgbox" class="panel" hidden>
+          <h2>Guardar notas no GitHub</h2>
+          <div class="small">
+            1) Crie um repositório <b>privado</b> só para os dados (ex.:
+            <b>nfse-dados</b>).<br />2) Em GitHub → Settings → Developer
+            settings → Fine-grained tokens, crie um token apenas para esse
+            repositório, com <b>Contents: Read and write</b>.<br />3) Crie uma
+            <b>senha</b>. O token é criptografado com ela (AES-256) e só abre
+            neste aparelho, depois de você digitar a senha. Se esquecer a senha,
+            é só gerar outro token (não há recuperação).
+          </div>
+          <label for="c_repo">Repositório (usuário/nome)</label
+          ><input
+            id="c_repo"
+            type="text"
+            placeholder="dev-filipealves/nfse-dados"
+            autocomplete="off"
+            autocapitalize="off"
+          />
+          <label for="c_token">Token</label
+          ><input
+            id="c_token"
+            type="password"
+            placeholder="github_pat_..."
+            autocomplete="off"
+          />
+          <label for="c_pass">Senha (mínimo 6 caracteres)</label
+          ><input id="c_pass" type="password" autocomplete="new-password" />
+          <label for="c_pass2">Repita a senha</label
+          ><input id="c_pass2" type="password" autocomplete="new-password" />
+          <label for="c_path">Arquivo do banco</label
+          ><input
+            id="c_path"
+            type="text"
+            placeholder="notas.json"
+            autocomplete="off"
+            autocapitalize="off"
+          />
+          <button class="btn" id="c_save" style="width: 100%">
+            💾 Salvar e testar
+          </button>
+          <button class="btn sec" id="c_clear" style="width: 100%">
+            Remover configuração
+          </button>
+          <button class="btn sec" id="c_back" style="width: 100%">
+            Voltar
+          </button>
+        </div>
+        <div id="repbox" class="panel" hidden>
+          <h2>Relatórios</h2>
+          <label for="r_per">Período</label>
+          <select id="r_per">
+            <option value="mes">Este mês</option>
+            <option value="mesant">Mês anterior</option>
+            <option value="ano">Este ano</option>
+            <option value="anoant">Ano anterior</option>
+            <option value="tudo">Todo o período</option>
+          </select>
+          <div id="r_out"></div>
+          <div class="sect">Exportar</div>
+          <div class="finacts">
+            <button class="btn sec" id="r_csv">⬇️ CSV (Excel)</button>
+            <button class="btn sec" id="r_pdf">⬇️ PDF</button>
+          </div>
+        </div>
+        <div id="finbox" class="panel" hidden>
+          <h2>💰 Financeiro</h2>
+          <div class="chips" id="f_tabs">
+            <button class="chip on" data-l="PJ">🏢 PJ (empresa)</button>
+            <button class="chip" data-l="PF">👤 PF (pessoal)</button>
+          </div>
+          <div class="mesnav">
+            <button class="btn sec" id="f_prev" aria-label="Mês anterior">
+              ‹
+            </button>
+            <select id="f_mes" aria-label="Mês"></select>
+            <button class="btn sec" id="f_next" aria-label="Próximo mês">
+              ›
+            </button>
+          </div>
+          <div id="f_cur" class="small"></div>
+          <div id="f_sum"></div>
+          <div id="f_lists"></div>
+          <div class="sect">Exportar</div>
+          <div class="finacts">
+            <button class="btn sec" id="f_wpp">📤 WhatsApp</button>
+            <button class="btn sec" id="f_pdf">⬇️ PDF</button>
+            <button class="btn sec" id="f_csv">⬇️ Tabela (CSV)</button>
+          </div>
+        </div>
+        <div id="oslist" class="panel" hidden>
+          <h2>Ordens de serviço</h2>
+          <div class="small">
+            Toque numa ordem para abrir, baixar o PDF e compartilhar.
+          </div>
+          <div id="os_sum"></div>
+          <input
+            id="os_q"
+            type="search"
+            placeholder="Buscar por cliente, número ou veículo"
+            autocomplete="off"
+          />
+          <div id="os_items"></div>
+        </div>
+        <div id="oseditor" class="panel" hidden>
+          <h2 id="os_title">Nova ordem de serviço</h2>
+          <div class="osgrid">
+            <div>
+              <label for="os_cliente">Cliente</label
+              ><input id="os_cliente" type="text" autocomplete="off" />
+            </div>
+            <div>
+              <label for="os_tel">WhatsApp / telefone</label
+              ><input
+                id="os_tel"
+                type="text"
+                inputmode="tel"
+                autocomplete="off"
+              />
+            </div>
+            <div>
+              <label for="os_veic">Veículo / modelo</label
+              ><input id="os_veic" type="text" autocomplete="off" />
+            </div>
+            <div>
+              <label for="os_placa">Placa</label
+              ><input id="os_placa" type="text" autocomplete="off" />
+            </div>
+            <div>
+              <label for="os_data">Data</label
+              ><input id="os_data" type="date" />
+            </div>
+            <div>
+              <label for="os_num">Nº da OS</label
+              ><input
+                id="os_num"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+              />
+            </div>
+            <div>
+              <label for="os_status">Situação</label>
+              <select id="os_status">
+                <option value="aberta">Aberta</option>
+                <option value="concluida">Concluída</option>
+                <option value="paga">Paga</option>
+              </select>
+            </div>
+          </div>
+          <div class="sect">Produtos / peças</div>
+          <div id="os_prods"></div>
+          <button class="btn sec" id="os_addp" type="button">
+            ➕ Adicionar produto
+          </button>
+          <div class="sect">Serviços</div>
+          <div id="os_servs"></div>
+          <button class="btn sec" id="os_adds" type="button">
+            ➕ Adicionar serviço
+          </button>
+          <div class="sect">Fechamento</div>
+          <div class="osgrid">
+            <div>
+              <label for="os_desc">Desconto (R$)</label
+              ><input
+                id="os_desc"
+                type="text"
+                inputmode="decimal"
+                placeholder="0,00"
+                autocomplete="off"
+              />
+            </div>
+            <div>
+              <label for="os_pag">Forma de pagamento</label
+              ><select id="os_pag"></select>
+            </div>
+          </div>
+          <label for="os_obs">Observações</label>
+          <textarea id="os_obs" rows="3"></textarea>
+          <div id="os_tot" class="ostot"></div>
+          <div id="os_err" class="small" style="color: #d23b3b"></div>
+          <button class="btn" id="os_save" type="button" style="width: 100%">
+            💾 Salvar ordem de serviço
+          </button>
+          <button
+            class="btn sec"
+            id="os_cancel"
+            type="button"
+            style="width: 100%"
+          >
+            Cancelar
+          </button>
+        </div>
+        <div id="osview" hidden>
+          <div id="osfit"><div id="ospaper"></div></div>
+        </div>
+        <div id="fmodal" class="modal" hidden>
+          <div
+            class="panel"
+            style="
+              width: 100%;
+              max-width: 420px;
+              max-height: 92vh;
+              overflow: auto;
+            "
+          >
+            <h2 id="ftitle"></h2>
+            <label for="fi_nome">Nome</label>
+            <input id="fi_nome" type="text" autocomplete="off" />
+            <label for="fi_valor">Valor (R$)</label>
+            <input
+              id="fi_valor"
+              type="text"
+              inputmode="decimal"
+              placeholder="0,00"
+              autocomplete="off"
+            />
+            <label for="fi_data">Data</label>
+            <input id="fi_data" type="date" />
+            <label for="fi_cat">Categoria</label>
+            <select id="fi_cat"></select>
+            <label class="chk"
+              ><input id="fi_pago" type="checkbox" /><span
+                id="fi_pagolbl"
+              ></span
+            ></label>
+            <label class="chk"
+              ><input id="fi_rec" type="checkbox" />Repete todo mês
+              (recorrente)</label
+            >
+            <div id="fi_err" class="small" style="color: #d23b3b"></div>
+            <button class="btn" id="fi_save" style="width: 100%">Salvar</button>
+            <button class="btn sec" id="fi_del" style="width: 100%" hidden>
+              🗑 Excluir
+            </button>
+            <button class="btn sec" id="fi_cancel" style="width: 100%">
+              Cancelar
+            </button>
+          </div>
+        </div>
+        <div id="txmodal" class="modal" hidden>
+          <div class="panel" style="width: 100%; max-width: 420px">
+            <h2 id="txtitle"></h2>
+            <textarea id="txin" rows="6"></textarea>
+            <div id="txbtns"></div>
+          </div>
+        </div>
+        <div id="pwmodal" class="modal" hidden>
+          <div class="panel" style="width: 100%; max-width: 380px">
+            <h2>🔒 Desbloquear</h2>
+            <div class="small" id="pwmsg"></div>
+            <input
+              id="pwin"
+              type="password"
+              autocomplete="current-password"
+              placeholder="Senha"
+            /><button class="btn" id="pwok" style="width: 100%">
+              Desbloquear</button
+            ><button class="btn sec" id="pwcancel" style="width: 100%">
+              Cancelar
+            </button>
+          </div>
+        </div>
+        <div id="fit" hidden><div id="paper"></div></div>
+        <div class="hint" id="hint" hidden>
+          Dica: toque em qualquer campo da nota para corrigir um texto antes de
+          baixar.
+        </div>
+        <!-- Rodapé com a versão. O número é calculado automaticamente (veja o script abaixo). -->
       </div>
     </div>
-    <div id="txmodal" class="modal" hidden>
-      <div class="panel" style="width: 100%; max-width: 420px">
-        <h2 id="txtitle"></h2>
-        <textarea id="txin" rows="6"></textarea>
-        <div id="txbtns"></div>
-      </div>
-    </div>
-    <div id="pwmodal" class="modal" hidden>
-      <div class="panel" style="width: 100%; max-width: 380px">
-        <h2>🔒 Desbloquear</h2>
-        <div class="small" id="pwmsg"></div>
-        <input
-          id="pwin"
-          type="password"
-          autocomplete="current-password"
-          placeholder="Senha"
-        /><button class="btn" id="pwok" style="width: 100%">Desbloquear</button
-        ><button class="btn sec" id="pwcancel" style="width: 100%">
-          Cancelar
-        </button>
-      </div>
-    </div>
-    <div id="fit" hidden><div id="paper"></div></div>
-    <div class="hint" id="hint" hidden>
-      Dica: toque em qualquer campo da nota para corrigir um texto antes de
-      baixar.
-    </div>
-    <!-- Rodapé com a versão. O número é calculado automaticamente (veja o script abaixo). -->
     <footer class="app-footer">
       <div class="app-footer-row">
         <span>AXION | Sistemas Embarcados e Energia</span>
@@ -443,7 +851,7 @@
       <div id="lastSync" class="app-footer-sync">☁ Somente neste aparelho</div>
     </footer>
 
-    <script src="version.js?v=2026-11-04.3"></script>
+    <script src="version.js?v=2026-11-07.1"></script>
 
     <!-- Bibliotecas externas: versão fixa + SRI (o navegador bloqueia o arquivo se ele for alterado) -->
     <script
@@ -473,7 +881,7 @@
     ></script>
 
     <!-- Código da aplicação -->
-    <script src="logo.js?v=2026-11-04.3"></script>
-    <script src="app.js?v=2026-11-04.3"></script>
+    <script src="logo.js?v=2026-11-07.1"></script>
+    <script src="app.js?v=2026-11-07.1"></script>
   </body>
 </html>
