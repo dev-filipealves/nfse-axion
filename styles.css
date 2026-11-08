@@ -1438,7 +1438,7 @@ body::before {
 .osp-client {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px 20px;
+  gap: 16px 24px;
   margin: 22px 0 26px;
   padding: 18px 22px;
   border-radius: 10px;
@@ -1455,7 +1455,13 @@ body::before {
   font-size: 18px;
 }
 .osp-client span {
+  display: block;
   font-size: 16px;
+  margin-top: 2px;
+}
+.osp-client strong {
+  display: block;
+  margin-top: 2px;
 }
 .osp-client .full {
   grid-column: span 2;

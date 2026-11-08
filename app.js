@@ -11,7 +11,7 @@
 "use strict";
 
 // Identificação desta publicação (o version.js confere se os arquivos combinam)
-window.AXION_BUILD = "2026-11-07.2";
+window.AXION_BUILD = "2026-11-07.3";
 
 window.addEventListener("error", function (e) {
   var m = document.getElementById("msg");
@@ -3340,6 +3340,16 @@ window.addEventListener("error", function (e) {
     const v = parseValor(s);
     return v > 0 ? v : 0;
   }
+  /** Telefone legível: 51991513460 -> (51) 99151-3460. Outros formatos ficam como digitados. */
+  function fmtTel(t) {
+    const s = String(t || "").trim(),
+      n = s.replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "");
+    if (n.length === 11)
+      return "(" + n.slice(0, 2) + ") " + n.slice(2, 7) + "-" + n.slice(7);
+    if (n.length === 10)
+      return "(" + n.slice(0, 2) + ") " + n.slice(2, 6) + "-" + n.slice(6);
+    return s;
+  }
   /** Horas decimais em texto: 5.6667 -> "5h40". */
   function fmtHoras(h) {
     const t = Math.round(h * 60),
@@ -3805,13 +3815,19 @@ window.addEventListener("error", function (e) {
         brl(T.serv) +
         "</td></tr></tfoot></table>"
       : "";
-    const meta = [
-      o.veiculo ? "Veículo/modelo: " + esc(o.veiculo) : "",
-      o.placa ? "Placa: " + esc(o.placa) : "",
-      o.tel ? "Contato: " + esc(o.tel) : "",
-    ]
-      .filter(Boolean)
-      .join(" · ");
+    // Quadro do cliente: CLIENTE | CONTATO  /  VEÍCULO/MODELO | DATA
+    const veiculo =
+      [o.veiculo, o.placa ? "Placa " + o.placa : ""]
+        .filter(Boolean)
+        .join(" · ") || "—";
+    const campo = (rot, val, forte) =>
+      "<div><label>" +
+      rot +
+      "</label>" +
+      (forte ? "<strong>" : "<span>") +
+      esc(val) +
+      (forte ? "</strong>" : "</span>") +
+      "</div>";
     return (
       '<div class="osp-head"><div><div class="osp-name">' +
       esc(OS_EMPRESA.nome) +
@@ -3827,12 +3843,11 @@ window.addEventListener("error", function (e) {
       '<div class="osp-body"><div class="osp-title"><span>ORDEM DE SERVIÇO</span><b>Nº ' +
       osNum(o) +
       "</b></div>" +
-      '<div class="osp-client"><div><label>CLIENTE</label><strong>' +
-      esc(o.cliente) +
-      "</strong></div><div><label>DATA</label><span>" +
-      dataBR(o.data) +
-      "</span></div>" +
-      (meta ? '<div class="full">' + meta + "</div>" : "") +
+      '<div class="osp-client">' +
+      campo("CLIENTE", o.cliente, true) +
+      campo("CONTATO", fmtTel(o.tel) || "—") +
+      campo("VEÍCULO/MODELO", veiculo) +
+      campo("DATA", dataBR(o.data)) +
       "</div>" +
       tabProd +
       tabServ +
