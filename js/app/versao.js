@@ -73,19 +73,19 @@
     });
 })();
 
-/* Confere se o index.html, o app.js e o version.js são da mesma publicação */
+/* Confere se todos os arquivos carregados são da mesma publicação (js/base/config.js define AXION_BUILD) */
 window.addEventListener("load", function () {
-  var ESPERADO = "2026-11-07.4";
+  var ESPERADO = "2026-11-08.1";
   if (window.AXION_BUILD === ESPERADO) return;
   var m = document.getElementById("msg");
   if (m) {
     m.textContent =
-      "⚠️ Arquivos desatualizados: envie o app.js novo ao GitHub e recarregue a página (limpe o cache do navegador).";
+      "⚠️ Arquivos desatualizados: envie todos os arquivos ao GitHub e recarregue a página (limpe o cache do navegador).";
     m.className = "err";
   }
   var f = document.getElementById("lastSync");
   if (f) {
-    f.textContent = "⚠️ app.js desatualizado";
+    f.textContent = "⚠️ Arquivos desatualizados";
     f.classList.add("warn");
   }
 });

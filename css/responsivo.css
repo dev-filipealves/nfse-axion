@@ -1,0 +1,357 @@
+/**
+ * AXION · Computador (telas largas)
+ *
+ * Ajustes a partir de 1024 px e 1440 px: menu lateral, barra superior, quadrados maiores e conteúdo em colunas.
+ */
+@media (min-width: 1024px) {
+  .shell {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    min-height: 100vh;
+  }
+  .rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    padding: 22px 0 80px;
+    box-sizing: border-box;
+  }
+  .rail-btn {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--muted);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .rail-btn:hover {
+    color: var(--fg);
+    border-color: rgba(111, 160, 255, 0.5);
+  }
+  .rail-btn::after {
+    content: attr(data-tip);
+    position: absolute;
+    left: 62px;
+    white-space: nowrap;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: #fff;
+    color: #05133a;
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-4px);
+    transition: 0.15s;
+    z-index: 10;
+  }
+  .rail-btn:hover::after {
+    opacity: 1;
+    transform: none;
+  }
+  .rail-sp {
+    flex: 1;
+  }
+  /* item ativo do menu: círculo claro, como no painel de referência */
+  body:has(#empty:not([hidden])) .rail-btn[data-go="home"],
+  body:has(#listbox:not([hidden])) .rail-btn[data-go="notas"],
+  body:has(#fit:not([hidden])) .rail-btn[data-go="notas"],
+  body:has(#oslist:not([hidden])) .rail-btn[data-go="os"],
+  body:has(#oseditor:not([hidden])) .rail-btn[data-go="os"],
+  body:has(#osview:not([hidden])) .rail-btn[data-go="os"],
+  body:has(#finbox:not([hidden])) .rail-btn[data-go="fin"],
+  body:has(#repbox:not([hidden])) .rail-btn[data-go="rel"],
+  body:has(#cfgbox:not([hidden])) .rail-btn[data-go="cfg"] {
+    background: #fff;
+    color: var(--accent);
+    border-color: #fff;
+    box-shadow: 0 8px 24px rgba(47, 107, 255, 0.35);
+  }
+  .main {
+    max-width: 1360px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 28px 90px 8px;
+    box-sizing: border-box;
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 22px 0 10px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 230px;
+  }
+  .brand img {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    box-shadow: 0 0 0 1px var(--line);
+  }
+  .brand b {
+    display: block;
+    font-size: 19px;
+    letter-spacing: 0.6px;
+  }
+  .brand small {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .search {
+    flex: 1;
+    max-width: 460px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px;
+    height: 46px;
+    border-radius: 999px !important;
+    color: var(--muted);
+  }
+  .search input {
+    flex: 1;
+    background: none;
+    border: 0;
+    outline: none;
+    color: var(--fg);
+    font: inherit;
+    font-size: 14px;
+  }
+  .tb-chips {
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
+  }
+  .pill {
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--fg);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  button.pill {
+    cursor: pointer;
+  }
+
+  /* largura total dentro da área principal */
+  .bar,
+  #msg,
+  .hint,
+  #empty {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .panel {
+    max-width: none;
+    margin: 12px 0;
+    padding: 22px 24px;
+  }
+  .bar h1 {
+    font-size: 26px;
+  }
+  .bar small {
+    font-size: 14px;
+  }
+
+  /* tela inicial */
+  .home-head {
+    display: none;
+  }
+  .hero {
+    padding: 26px 30px;
+  }
+  .hero-main {
+    font-size: 34px;
+  }
+  .hero-pct {
+    font-size: 44px;
+  }
+  .hero-cap {
+    max-width: 140px;
+    font-size: 12px;
+  }
+  .tiles {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  .tile {
+    min-height: 200px;
+    padding: 22px;
+  }
+  .tile:hover {
+    border-color: rgba(111, 160, 255, 0.55);
+    transform: translateY(-2px);
+  }
+  .tile .ico {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+  }
+  .tile .ico svg {
+    width: 30px;
+    height: 30px;
+  }
+  .tile .tt {
+    font-size: 20px;
+  }
+  .tile .ts {
+    font-size: 13px;
+  }
+  .dash {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .c-fluxo,
+  .c-ultimas {
+    grid-column: span 2;
+  }
+  .card {
+    padding: 22px;
+  }
+  .fl {
+    height: 250px;
+  }
+
+  /* conteúdo em colunas */
+  .fcols {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    align-items: start;
+  }
+  .rcols {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+  }
+  .fcards {
+    gap: 14px;
+  }
+  .fcard {
+    padding: 16px;
+  }
+  .fcard b {
+    font-size: 20px;
+  }
+  .osgrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  #items,
+  #os_items {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 14px;
+  }
+
+  /* rodapé fixo começa depois do menu lateral */
+  body .app-footer {
+    left: 92px;
+    background: rgba(6, 12, 32, 0.85);
+    backdrop-filter: blur(8px);
+  }
+}
+@media (min-width: 1440px) {
+  .tiles {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .tile {
+    min-height: 210px;
+  }
+}
+@media (min-width: 1024px) {
+  .c-fluxo {
+    order: 1;
+  }
+  .c-acao {
+    order: 2;
+  }
+  .c-ultimas {
+    order: 3;
+  }
+  .c-categ {
+    order: 4;
+  }
+}
+@media (min-width: 1024px) {
+  .bar small {
+    font-size: 24px;
+  }
+}
+@media (min-width: 1024px) {
+  .hub {
+    max-width: none;
+    padding: 0;
+  }
+  #empty .tiles,
+  .hub .tiles {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  .hub .tile {
+    min-height: 220px;
+  }
+  .perfis {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+  #cat_items {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 14px;
+  }
+  /* item ativo do menu lateral */
+  body:has(#nfhub:not([hidden])) .rail-btn[data-go="nf"],
+  body:has(#listbox:not([hidden])) .rail-btn[data-go="nf"],
+  body:has(#fit:not([hidden])) .rail-btn[data-go="nf"],
+  body:has(#repbox:not([hidden])) .rail-btn[data-go="nf"],
+  body:has(#oshub:not([hidden])) .rail-btn[data-go="os"],
+  body:has(#oslist:not([hidden])) .rail-btn[data-go="os"],
+  body:has(#oseditor:not([hidden])) .rail-btn[data-go="os"],
+  body:has(#osview:not([hidden])) .rail-btn[data-go="os"],
+  body:has(#osrep:not([hidden])) .rail-btn[data-go="os"],
+  body:has(#catbox:not([hidden])) .rail-btn[data-go="os"],
+  body:has(#finperfis:not([hidden])) .rail-btn[data-go="fin"],
+  body:has(#finbox:not([hidden])) .rail-btn[data-go="fin"] {
+    background: #fff;
+    color: var(--accent);
+    border-color: #fff;
+    box-shadow: 0 8px 24px rgba(47, 107, 255, 0.35);
+  }
+}
+@media (min-width: 1024px) {
+  .perfis {
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  }
+  .pcard .fcard b {
+    font-size: 17px;
+  }
+}
+@media (min-width: 1024px) {
+  .perfis {
+    grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+  }
+  .pcard .fcard b {
+    font-size: 16px;
+  }
+}

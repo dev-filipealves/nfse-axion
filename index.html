@@ -16,42 +16,15 @@
       content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'"
     />
     <meta name="referrer" content="no-referrer" />
-    <link rel="stylesheet" href="styles.css?v=2026-11-07.4" />
-    <style>
-      /* Rodapé fixo: sempre visível, sem precisar rolar a página */
-      body {
-        padding-bottom: 62px;
-      }
-      .app-footer {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 5;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 2px;
-        padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
-        background: var(--bg);
-        border-top: 1px solid var(--line);
-        color: var(--muted);
-        font-size: 12px;
-        text-align: center;
-      }
-      .app-footer-row {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 8px;
-      }
-      .app-footer b {
-        color: var(--fg);
-      }
-      .app-footer-sync.warn {
-        color: #e0a100;
-      }
-    </style>
+    <!-- Estilos: do geral (base) ao específico; responsivo.css por último -->
+    <link rel="stylesheet" href="css/base.css?v=2026-11-08.1" />
+    <link rel="stylesheet" href="css/componentes.css?v=2026-11-08.1" />
+    <link rel="stylesheet" href="css/layout.css?v=2026-11-08.1" />
+    <link rel="stylesheet" href="css/painel.css?v=2026-11-08.1" />
+    <link rel="stylesheet" href="css/nota.css?v=2026-11-08.1" />
+    <link rel="stylesheet" href="css/financas.css?v=2026-11-08.1" />
+    <link rel="stylesheet" href="css/os.css?v=2026-11-08.1" />
+    <link rel="stylesheet" href="css/responsivo.css?v=2026-11-08.1" />
   </head>
   <body>
     <div class="shell">
@@ -988,7 +961,7 @@
       <div id="lastSync" class="app-footer-sync">☁ Somente neste aparelho</div>
     </footer>
 
-    <script src="version.js?v=2026-11-07.4"></script>
+    <script src="js/app/versao.js?v=2026-11-08.1"></script>
 
     <!-- Bibliotecas externas: versão fixa + SRI (o navegador bloqueia o arquivo se ele for alterado) -->
     <script
@@ -1016,9 +989,38 @@
       integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk"
       crossorigin="anonymous"
     ></script>
-
-    <!-- Código da aplicação -->
-    <script src="logo.js?v=2026-11-07.4"></script>
-    <script src="app.js?v=2026-11-07.4"></script>
+    <!-- Código da aplicação: carregado nesta ordem (cada arquivo usa os anteriores) -->
+    <!-- Base: configuração, utilitários e interface comum -->
+    <script src="js/base/logo.js?v=2026-11-08.1"></script>
+    <script src="js/base/config.js?v=2026-11-08.1"></script>
+    <script src="js/base/utils.js?v=2026-11-08.1"></script>
+    <script src="js/base/ui.js?v=2026-11-08.1"></script>
+    <!-- Dados: segurança e GitHub -->
+    <script src="js/dados/seguranca.js?v=2026-11-08.1"></script>
+    <script src="js/dados/github.js?v=2026-11-08.1"></script>
+    <!-- Nota Fiscal -->
+    <script src="js/notas/banco.js?v=2026-11-08.1"></script>
+    <script src="js/notas/leitor.js?v=2026-11-08.1"></script>
+    <script src="js/notas/documento.js?v=2026-11-08.1"></script>
+    <script src="js/notas/lista.js?v=2026-11-08.1"></script>
+    <script src="js/notas/relatorios.js?v=2026-11-08.1"></script>
+    <!-- Finanças -->
+    <script src="js/financas/banco.js?v=2026-11-08.1"></script>
+    <script src="js/financas/perfis.js?v=2026-11-08.1"></script>
+    <script src="js/financas/tela.js?v=2026-11-08.1"></script>
+    <script src="js/financas/exportar.js?v=2026-11-08.1"></script>
+    <script src="js/financas/lancar.js?v=2026-11-08.1"></script>
+    <!-- Ordem de serviço -->
+    <script src="js/os/banco.js?v=2026-11-08.1"></script>
+    <script src="js/os/cadastro.js?v=2026-11-08.1"></script>
+    <script src="js/os/lista.js?v=2026-11-08.1"></script>
+    <script src="js/os/editor.js?v=2026-11-08.1"></script>
+    <script src="js/os/documento.js?v=2026-11-08.1"></script>
+    <script src="js/os/relatorios.js?v=2026-11-08.1"></script>
+    <!-- Aplicação: painel, configurações, navegação e inicialização -->
+    <script src="js/app/painel.js?v=2026-11-08.1"></script>
+    <script src="js/app/configuracoes.js?v=2026-11-08.1"></script>
+    <script src="js/app/navegacao.js?v=2026-11-08.1"></script>
+    <script src="js/app/main.js?v=2026-11-08.1"></script>
   </body>
 </html>

@@ -155,7 +155,7 @@ A ferramenta foi pensada para que dados de clientes e credenciais **não fiquem 
 
 ## 🌐 Como publicar o seu próprio site
 
-1. Crie um repositório e envie os 5 arquivos na raiz: `index.html`, `styles.css`, `app.js`, `logo.js` e `version.js`.
+1. Crie um repositório e envie o `index.html` e as pastas `css/` e `js/` (mesma estrutura deste repositório).
 2. No repositório, abra **Settings → Pages**.
 3. Em **Source**, escolha **Deploy from a branch**, a branch `main` e a pasta `/ (root)`, e salve.
 4. Aguarde cerca de 1 a 2 minutos. O site fica em `https://SEU-USUARIO.github.io/NOME-DO-REPOSITORIO/`.
@@ -184,13 +184,77 @@ Os arquivos `notas.json`, `financeiro.json`, `perfis.json`, `ordens.json` e `ser
 
 ## 📁 Estrutura do projeto
 
+Site estático, **sem etapa de compilação**: HTML, CSS e JavaScript puros, publicados como estão no GitHub Pages.
+
 ```
-├── index.html   # estrutura da página
-├── styles.css   # identidade visual e layout (com tema claro e escuro)
-├── app.js       # lógica da aplicação (comentada)
-├── logo.js      # logo da AXION embutida
-└── version.js   # versão automática do rodapé (1.0.N)
+├── index.html              # estrutura de todas as telas
+├── css/                    # estilos, do geral ao específico (carregados nesta ordem)
+│   ├── base.css            # cores (variáveis), tema, reset e fundo
+│   ├── componentes.css     # botões, painéis, campos, listas, janelas, etiquetas
+│   ├── layout.css          # cabeçalho, barras de ação, títulos, menu lateral, rodapé
+│   ├── painel.css          # tela inicial, quadrados e cartões do painel
+│   ├── nota.css            # documento da nota fiscal (sempre claro) e gráfico
+│   ├── financas.css        # tela do perfil e “Meus perfis”
+│   ├── os.css              # editor, documento e cadastro da ordem de serviço
+│   └── responsivo.css      # ajustes para computador (≥ 1024 px)
+└── js/                     # código, um arquivo por responsabilidade (carregados nesta ordem)
+    ├── base/
+    │   ├── logo.js         # logo da AXION (imagem embutida)
+    │   ├── config.js       # ⚙️ TODOS os valores fixos: empresa, limite do MEI, categorias, arquivos
+    │   ├── utils.js        # formatação e conversão (moeda, datas, horas, telefone, CSV)
+    │   └── ui.js           # mensagens, janela de opções, download e links
+    ├── dados/
+    │   ├── seguranca.js    # armazenamento local, configuração e senha (criptografia do token)
+    │   └── github.js       # API do GitHub, indicador de sincronização e banco genérico
+    ├── notas/              # 🧾 Nota Fiscal
+    │   ├── banco.js        # notas.json e PDF original
+    │   ├── leitor.js       # leitura do PDF (DANFSe v1.0 e v2.0)
+    │   ├── documento.js    # nota personalizada, QR Code, PDF e compartilhar
+    │   ├── lista.js        # Minhas notas: busca, filtros, situação, cobrança
+    │   └── relatorios.js   # relatórios, gráfico, projeção, CSV e PDF
+    ├── financas/           # 💰 Finanças
+    │   ├── banco.js        # financeiro.json e cálculos do mês
+    │   ├── perfis.js       # perfis.json, “Meus perfis” e escolha de perfil
+    │   ├── tela.js         # tela do perfil: lançamentos, recorrentes, dízimo
+    │   ├── exportar.js     # resumo WhatsApp, CSV e PDF
+    │   └── lancar.js       # lançar nota no financeiro e replicar receita
+    ├── os/                 # 🛠 Ordem de serviço
+    │   ├── banco.js        # ordens.json, numeração e totais
+    │   ├── cadastro.js     # cadastro de serviços (servicos.json)
+    │   ├── lista.js        # Minhas OS
+    │   ├── editor.js       # criar/editar OS
+    │   ├── documento.js    # documento da OS, PDF, compartilhar e lançar
+    │   └── relatorios.js   # relatórios de OS
+    └── app/
+        ├── versao.js       # versão automática do rodapé (carregado primeiro)
+        ├── painel.js       # tela inicial e números dos quadrados
+        ├── configuracoes.js # tela de configuração do GitHub
+        ├── navegacao.js    # troca de telas, quadrados, menu lateral e botão Voltar
+        └── main.js         # inicialização (último arquivo)
 ```
+
+### 🧭 Onde mexer
+
+| Quero mudar… | Arquivo |
+| --- | --- |
+| Nome da empresa, CNPJ, cabeçalho da OS, limite do MEI, categorias, formas de pagamento | `js/base/config.js` |
+| Cores e tema | `css/base.css` (variáveis em `:root`) |
+| Visual de botões, painéis, campos | `css/componentes.css` |
+| Leitura do PDF da nota (campos, novo modelo) | `js/notas/leitor.js` |
+| Layout da nota personalizada ou do QR Code | `js/notas/documento.js` + `css/nota.css` |
+| Layout da ordem de serviço | `js/os/documento.js` + `css/os.css` |
+| Cálculo de horas, totais e desconto da OS | `js/os/banco.js` |
+| Mensagem de cobrança ou resumo do WhatsApp | `js/notas/lista.js` / `js/financas/exportar.js` |
+| Menus, quadrados e botão Voltar | `index.html` + `js/app/navegacao.js` |
+| Senha e criptografia | `js/dados/seguranca.js` |
+| Salvar/carregar no GitHub | `js/dados/github.js` e o `banco.js` de cada ferramenta |
+
+### 🛠️ Convenções
+- **Ordem de carregamento:** os arquivos são scripts simples carregados em ordem pelo `index.html`. Cada um usa o que foi carregado antes; `main.js` é sempre o último. Os nomes declarados no topo de cada arquivo ficam disponíveis para os seguintes.
+- **Cabeçalho em cada arquivo:** diz o que ele faz e de quais arquivos depende. Cada função tem um comentário de uma linha.
+- **Uma publicação = um número:** o número (ex.: `2026-11-08.1`) aparece no `index.html` (`?v=` de cada arquivo, para o navegador baixar a versão nova), em `js/base/config.js` e em `js/app/versao.js`. Ao publicar, troque nos três.
+- **Formatação:** [Prettier](https://prettier.io/) com a configuração padrão.
+- **Segurança:** a Content Security Policy do `index.html` só permite scripts do próprio site e do jsDelivr; por isso não há código dentro do HTML.
 
 ---
 

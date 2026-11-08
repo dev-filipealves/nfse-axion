@@ -1,0 +1,162 @@
+/**
+ * AXION · Finanças
+ *
+ * Tela do perfil (mês, totais, entradas e despesas) e cartões de “Meus perfis”.
+ */
+.mesnav {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+.mesnav .btn {
+  margin: 0;
+  height: 44px;
+  padding: 0 16px;
+}
+.mesnav select {
+  flex: 1;
+  min-width: 0;
+}
+.atual {
+  color: #2e9e5b;
+  font-weight: 600;
+}
+.fcards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+.fcard {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.fcard b {
+  display: block;
+  font-size: 14px;
+  color: var(--fg);
+  margin-top: 4px;
+  white-space: nowrap;
+}
+.fcard.pos b {
+  color: #2e9e5b;
+}
+.fcard.neg b {
+  color: #d23b3b;
+}
+.finacts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.finacts .btn {
+  flex: 1 1 140px;
+  margin-top: 0;
+}
+.frow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.frow.edit {
+  cursor: pointer;
+}
+.fmain {
+  min-width: 0;
+}
+.fn {
+  font-size: 14px;
+  font-weight: 600;
+  word-break: break-word;
+}
+.fs {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.fv {
+  text-align: right;
+  flex-shrink: 0;
+}
+.fv b {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+.panel label.chk {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--fg);
+  margin-top: 14px;
+}
+.panel label.chk input {
+  width: auto;
+}
+.fcard {
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+}
+/* perfis financeiros */
+.perfis {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+.pcard {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+}
+.pcard:hover {
+  border-color: rgba(111, 160, 255, 0.5);
+}
+.pc-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pc-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.pc-name b {
+  font-size: 17px;
+}
+.pc-name small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.pcard .fcards {
+  margin: 12px 0 0;
+}
+/* Cartões de perfil: valores sem se sobrepor */
+.pcard .fcard {
+  min-width: 0;
+  padding: 10px;
+}
+.pcard .fcard b {
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pcard .fcard b {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: keep-all;
+}

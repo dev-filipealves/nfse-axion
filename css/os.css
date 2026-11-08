@@ -1,0 +1,254 @@
+/**
+ * AXION · Ordem de serviço
+ *
+ * Editor da OS, documento da OS (sempre em fundo claro, igual ao PDF) e cadastro de serviços.
+ */
+.osgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+}
+.osrow {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px 44px 12px 12px;
+  margin-bottom: 10px;
+  background: rgba(255, 255, 255, 0.02);
+}
+.osrow .o-del {
+  position: absolute;
+  top: 8px;
+  right: 6px;
+}
+.osrow-n {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+  margin-top: 8px;
+}
+.panel .osrow-n label {
+  flex: 1 1 110px;
+  margin: 0;
+  font-size: 11px;
+}
+.osrow-n input,
+.osrow-n select {
+  margin-top: 4px;
+}
+.o-tot {
+  flex: 1 1 100%;
+  text-align: right;
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--accent-2);
+}
+.osrow[data-modo="hora"] .l-v,
+.osrow[data-modo="fixo"] .l-h,
+.osrow[data-modo="fixo"] .l-vh {
+  display: none;
+}
+#oseditor textarea {
+  width: 100%;
+  padding: 11px;
+  color: var(--fg);
+  font: inherit;
+  font-size: 15px;
+}
+#oseditor > .btn {
+  margin-top: 10px;
+}
+.ostot {
+  margin: 14px 0 6px;
+}
+.row.total {
+  border: 0;
+  margin-top: 6px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--accent), #4b82ff);
+  color: #fff;
+}
+.row.total b {
+  font-size: 20px;
+}
+#osfit {
+  margin: 0 auto;
+  overflow: hidden;
+  width: 100%;
+  max-width: 820px;
+  padding: 0 6px;
+}
+#ospaper {
+  width: 794px;
+  min-height: 1123px;
+  background: #fff;
+  color: #1d2a44;
+  transform-origin: top left;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.osp-head {
+  background: #05133a;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 34px 48px;
+}
+.osp-name {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.osp-slogan {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-top: 6px;
+}
+.osp-razao {
+  font-size: 13px;
+  opacity: 0.85;
+  margin-top: 26px;
+  line-height: 1.8;
+}
+.osp-logo {
+  width: 150px;
+  height: 150px;
+  border-radius: 6px;
+}
+.osp-stripe {
+  height: 6px;
+  background: #2b7bb3;
+}
+.osp-body {
+  padding: 30px 48px 40px;
+}
+.osp-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 24px;
+  font-weight: 800;
+  color: #05133a;
+}
+.osp-title b {
+  color: #2b7bb3;
+}
+.osp-client {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 24px;
+  margin: 22px 0 26px;
+  padding: 18px 22px;
+  border-radius: 10px;
+  background: #f0f3f7;
+}
+.osp-client label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #6b7a90;
+}
+.osp-client strong {
+  font-size: 18px;
+}
+.osp-client span {
+  display: block;
+  font-size: 16px;
+  margin-top: 2px;
+}
+.osp-client strong {
+  display: block;
+  margin-top: 2px;
+}
+.osp-client .full {
+  grid-column: span 2;
+  font-size: 14px;
+}
+.osp-h {
+  font-size: 15px;
+  font-weight: 800;
+  color: #05133a;
+  margin: 22px 0 10px;
+}
+.osp-t {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+.osp-t th {
+  background: #05133a;
+  color: #fff;
+  text-align: left;
+  padding: 11px 16px;
+  font-size: 12.5px;
+}
+.osp-t th:first-child {
+  border-radius: 8px 0 0 8px;
+}
+.osp-t th:last-child {
+  border-radius: 0 8px 8px 0;
+}
+.osp-t td {
+  padding: 11px 16px;
+}
+.osp-t tbody tr:nth-child(odd) td {
+  background: #f0f3f7;
+}
+.osp-t tfoot td {
+  font-weight: 800;
+  border-top: 1px solid #dfe4ec;
+  padding-top: 14px;
+}
+.osp-t .r {
+  text-align: right;
+  white-space: nowrap;
+}
+.osp-line {
+  height: 1px;
+  background: #dfe4ec;
+  margin: 26px 0 14px;
+}
+.osp-sum {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 800;
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+.osp-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 18px 0 16px;
+  padding: 20px 24px;
+  border-radius: 10px;
+  background: #05133a;
+  color: #fff;
+}
+.osp-total span {
+  font-weight: 800;
+  font-size: 17px;
+}
+.osp-total b {
+  font-size: 32px;
+}
+.osp-foot {
+  color: #6b7a90;
+  font-size: 13.5px;
+  margin-top: 10px;
+}
+.osp-ul {
+  display: inline-block;
+  width: 400px;
+  border-bottom: 1px solid #6b7a90;
+}
+.svc-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}

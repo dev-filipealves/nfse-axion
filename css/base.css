@@ -1,0 +1,109 @@
+/**
+ * AXION · Base
+ *
+ * Cores e tema (variáveis), reset, fundo da página e regra global do atributo hidden.
+ */
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  --bg: #eef1f7;
+  --fg: #0b1533;
+  --muted: #5b6785;
+  --card: #fff;
+  --line: #d5dbe8;
+  --navy: #05143b;
+  --accent: #2f6bff;
+}
+html {
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a0f1f;
+    --fg: #e8ecf7;
+    --muted: #9aa6c4;
+    --card: #121a33;
+    --line: #26325a;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0a0f1f;
+  --fg: #e8ecf7;
+  --muted: #9aa6c4;
+  --card: #121a33;
+  --line: #26325a;
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+}
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+  min-height: 100%;
+}
+/* Atributo "hidden" vale mesmo em elementos com display definido (ex.: .btn) */
+[hidden] {
+  display: none !important;
+}
+html:root:root {
+  --bg: #060c20;
+  --bg-2: #0a1532;
+  --card: #0e1734;
+  --card-2: #13204a;
+  --line: rgba(120, 152, 235, 0.16);
+  --fg: #e9eefb;
+  --muted: #8f9cc4;
+  --accent: #2f6bff;
+  --accent-2: #6fa0ff;
+  --ok: #2fbf71;
+  --bad: #ef5a5a;
+  --warn: #f0b429;
+  --radius: 22px;
+  color-scheme: dark;
+}
+/* Fundo com brilho: fica numa camada fixa própria (body::before).
+   Mesmo visual de "background-attachment: fixed", mas sem redesenhar
+   a tela inteira a cada rolagem (o que causava travadas no celular). */
+body {
+  background: none;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      900px 520px at 8% -8%,
+      rgba(47, 107, 255, 0.22),
+      transparent 60%
+    ),
+    radial-gradient(
+      760px 520px at 100% 108%,
+      rgba(111, 160, 255, 0.12),
+      transparent 60%
+    ),
+    linear-gradient(180deg, var(--bg-2), var(--bg) 380px);
+}
+
+/* Ordem dos cartões do painel no computador: gráfico + ações em cima */
+html {
+  background: var(--bg);
+}

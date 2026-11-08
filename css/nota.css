@@ -1,0 +1,223 @@
+/**
+ * AXION · Nota Fiscal
+ *
+ * Documento da nota personalizada (sempre em fundo claro, igual ao PDF) e gráfico do relatório.
+ */
+#paper {
+  width: 794px;
+  min-height: 1123px;
+  background: #fff;
+  color: #0b1533;
+  transform-origin: top left;
+  font-size: 11px;
+  line-height: 1.35;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+#paper .hd {
+  background: #05143b;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 28px;
+}
+#paper .hd img.logo {
+  width: 78px;
+  height: 78px;
+  border-radius: 12px;
+  display: block;
+}
+#paper .hd .t {
+  flex: 1;
+}
+#paper .hd .fan {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  line-height: 1.2;
+}
+#paper .hd .sub {
+  font-size: 11px;
+  opacity: 0.8;
+  margin-top: 4px;
+  letter-spacing: 0.3px;
+}
+#paper .hd .doc {
+  text-align: right;
+}
+#paper .hd .doc b {
+  font-size: 14px;
+  display: block;
+  letter-spacing: 0.5px;
+}
+#paper .hd .doc span {
+  font-size: 11px;
+  opacity: 0.85;
+}
+#paper .stripe {
+  height: 5px;
+  background: linear-gradient(90deg, #2f6bff, #6fa0ff 60%, #05143b);
+}
+#paper .body {
+  padding: 18px 28px 12px;
+  flex: 1;
+}
+#paper .sec {
+  border: 1px solid #d5dbe8;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+#paper .sec > h3 {
+  margin: 0;
+  background: #eef2fb;
+  color: #05143b;
+  font-size: 10.5px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-bottom: 1px solid #d5dbe8;
+}
+#paper .g {
+  display: grid;
+  gap: 0;
+}
+#paper .g.c2 {
+  grid-template-columns: 1fr 1fr;
+}
+#paper .g.c3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+#paper .g.c4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+#paper .f {
+  padding: 6px 10px;
+  border-right: 1px solid #eef1f7;
+  border-bottom: 1px solid #eef1f7;
+  min-width: 0;
+}
+#paper .f label {
+  display: block;
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #5b6785;
+  font-weight: 700;
+  margin-bottom: 1px;
+}
+#paper .f div {
+  font-size: 11.5px;
+  font-weight: 500;
+  word-break: break-word;
+}
+#paper .span2 {
+  grid-column: span 2;
+}
+#paper .span3 {
+  grid-column: span 3;
+}
+#paper .span4 {
+  grid-column: span 4;
+}
+#paper .key {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 11px !important;
+  letter-spacing: 0.3px;
+}
+#paper .top {
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+  margin-bottom: 10px;
+}
+#paper .top .sec {
+  margin: 0;
+  flex: 1;
+}
+#paper .qr {
+  width: 140px;
+  border: 1px solid #d5dbe8;
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+#paper .qr svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+#paper .qr span {
+  font-size: 8px;
+  color: #5b6785;
+  line-height: 1.2;
+}
+#paper .desc {
+  padding: 8px 10px;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+#paper .tot {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+#paper .tot .f.big {
+  background: #05143b;
+  color: #fff;
+  border: 0;
+}
+#paper .tot .f.big label {
+  color: #b9c7ee;
+}
+#paper .tot .f.big div {
+  font-size: 17px;
+  font-weight: 800;
+}
+#paper .ft {
+  border-top: 1px solid #d5dbe8;
+  padding: 10px 28px 16px;
+  font-size: 8.5px;
+  color: #5b6785;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-end;
+}
+#paper .ft b {
+  color: #05143b;
+}
+#paper .ft .sig {
+  min-width: 190px;
+  text-align: center;
+  border-top: 1px solid #5b6785;
+  padding-top: 3px;
+}
+#paper [contenteditable]:focus {
+  outline: 2px dashed #2f6bff;
+  outline-offset: 2px;
+}
+.proj {
+  font-size: 13px;
+  margin: 8px 0;
+  line-height: 1.4;
+}
+.bars {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.bars rect {
+  fill: var(--accent);
+}
+.bars text {
+  fill: var(--muted);
+  font-size: 9px;
+  text-anchor: middle;
+}
