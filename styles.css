@@ -1872,3 +1872,143 @@ html {
     font-size: 24px;
   }
 }
+
+/* ======================================================================
+   MENU POR FERRAMENTA: subferramentas em quadrados, perfis e cadastro
+   ====================================================================== */
+.hub {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 18px 12px 8px;
+}
+/* barras de ação das novas telas */
+body:has(#finperfis:not([hidden])) #tb-perfis,
+body:has(#catbox:not([hidden])) #tb-cat {
+  display: flex;
+}
+/* títulos das novas telas */
+body:has(#nfhub:not([hidden])) .sn-nf,
+body:has(#oshub:not([hidden])) .sn-os,
+body:has(#oslist:not([hidden])) .sn-oslist,
+body:has(#osrep:not([hidden])) .sn-osrel,
+body:has(#catbox:not([hidden])) .sn-cat,
+body:has(#finperfis:not([hidden])) .sn-fin {
+  display: inline;
+}
+body:has(#oslist:not([hidden])) .sn-os {
+  display: none;
+}
+/* perfis financeiros */
+.perfis {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+.pcard {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+}
+.pcard:hover {
+  border-color: rgba(111, 160, 255, 0.5);
+}
+.pc-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pc-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.pc-name b {
+  font-size: 17px;
+}
+.pc-name small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.pcard .fcards {
+  margin: 12px 0 0;
+}
+.svc-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+@media (min-width: 1024px) {
+  .hub {
+    max-width: none;
+    padding: 0;
+  }
+  #empty .tiles,
+  .hub .tiles {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  .hub .tile {
+    min-height: 220px;
+  }
+  .perfis {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+  #cat_items {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 14px;
+  }
+  /* item ativo do menu lateral */
+  body:has(#nfhub:not([hidden])) .rail-btn[data-go="nf"],
+  body:has(#listbox:not([hidden])) .rail-btn[data-go="nf"],
+  body:has(#fit:not([hidden])) .rail-btn[data-go="nf"],
+  body:has(#repbox:not([hidden])) .rail-btn[data-go="nf"],
+  body:has(#oshub:not([hidden])) .rail-btn[data-go="os"],
+  body:has(#oslist:not([hidden])) .rail-btn[data-go="os"],
+  body:has(#oseditor:not([hidden])) .rail-btn[data-go="os"],
+  body:has(#osview:not([hidden])) .rail-btn[data-go="os"],
+  body:has(#osrep:not([hidden])) .rail-btn[data-go="os"],
+  body:has(#catbox:not([hidden])) .rail-btn[data-go="os"],
+  body:has(#finperfis:not([hidden])) .rail-btn[data-go="fin"],
+  body:has(#finbox:not([hidden])) .rail-btn[data-go="fin"] {
+    background: #fff;
+    color: var(--accent);
+    border-color: #fff;
+    box-shadow: 0 8px 24px rgba(47, 107, 255, 0.35);
+  }
+}
+/* Cartões de perfil: valores sem se sobrepor */
+.pcard .fcard {
+  min-width: 0;
+  padding: 10px;
+}
+.pcard .fcard b {
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (min-width: 1024px) {
+  .perfis {
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  }
+  .pcard .fcard b {
+    font-size: 17px;
+  }
+}
+.pcard .fcard b {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: keep-all;
+}
+@media (min-width: 1024px) {
+  .perfis {
+    grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+  }
+  .pcard .fcard b {
+    font-size: 16px;
+  }
+}

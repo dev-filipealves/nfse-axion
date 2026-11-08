@@ -11,7 +11,7 @@
 "use strict";
 
 // Identificação desta publicação (o version.js confere se os arquivos combinam)
-window.AXION_BUILD = "2026-11-07.3";
+window.AXION_BUILD = "2026-11-07.4";
 
 window.addEventListener("error", function (e) {
   var m = document.getElementById("msg");
@@ -301,12 +301,7 @@ window.addEventListener("error", function (e) {
     <div style="max-width:430px">Documento auxiliar personalizado, gerado a partir do DANFSe oficial. A autenticidade da NFS-e deve ser conferida no Portal Nacional da NFS-e pela <b>chave de acesso</b>.<br><b>${esc(FANTASIA)}</b></div>
     <div class="sig">Data de ciência / assinatura</div>
   </div>`;
-    $("#empty").hidden = true;
-    $("#listbox").hidden = true;
-    $("#cfgbox").hidden = true;
-    $("#repbox").hidden = true;
-    $("#finbox").hidden = true;
-    $("#oslist").hidden = $("#oseditor").hidden = $("#osview").hidden = true;
+    hideAll();
     $("#fit").hidden = false;
     $("#hint").hidden = false;
     $("#dl").disabled = false;
@@ -867,6 +862,11 @@ window.addEventListener("error", function (e) {
       "#oslist",
       "#oseditor",
       "#osview",
+      "#nfhub",
+      "#oshub",
+      "#osrep",
+      "#catbox",
+      "#finperfis",
     ].forEach((s) => {
       $(s).hidden = true;
     });
@@ -1170,8 +1170,8 @@ window.addEventListener("error", function (e) {
   });
   /* ----- Relatórios ----- */
   /** Define o período escolhido no relatório (y = ano de referência do gráfico). */
-  function repRange() {
-    const v = $("#r_per").value,
+  function repRange(sel) {
+    const v = sel || $("#r_per").value,
       now = new Date(),
       y = now.getFullYear(),
       m = now.getMonth() + 1,
@@ -1789,13 +1789,10 @@ window.addEventListener("error", function (e) {
     $("#cancel").click();
   });
 
-  $("#cancel").addEventListener("click", () => {
+  /** Volta para a tela inicial e limpa a nota aberta. */
+  function irInicio() {
     current = null;
-    $("#repbox").hidden = true;
-    $("#finbox").hidden = true;
-    $("#oslist").hidden = $("#oseditor").hidden = $("#osview").hidden = true;
-    $("#listbox").hidden = true;
-    $("#cfgbox").hidden = true;
+    hideAll();
     $("#paper").innerHTML = "";
     $("#fit").hidden = true;
     $("#hint").hidden = true;
@@ -1806,7 +1803,36 @@ window.addEventListener("error", function (e) {
     $("#launchbtn").disabled = true;
     say("");
     window.scrollTo({ top: 0 });
-  });
+  }
+  /** Qual tela está aberta agora. */
+  function telaAtual() {
+    return [
+      "fit",
+      "listbox",
+      "repbox",
+      "nfhub",
+      "oseditor",
+      "osview",
+      "oslist",
+      "osrep",
+      "catbox",
+      "oshub",
+      "finbox",
+      "finperfis",
+      "cfgbox",
+    ].find((id) => !$("#" + id).hidden);
+  }
+  /** Botão Voltar: sobe um nível (subferramenta → ferramenta → início). */
+  function voltar() {
+    const t = telaAtual();
+    if (t === "fit") return showList();
+    if (t === "listbox" || t === "repbox") return showNfHub();
+    if (t === "oseditor" || t === "osview") return showOs();
+    if (t === "oslist" || t === "osrep" || t === "catbox") return showOsHub();
+    if (t === "finbox") return showFin();
+    irInicio();
+  }
+  $("#cancel").addEventListener("click", voltar);
 
   /** Nome do arquivo PDF da nota exibida na tela. */
   function nomeArquivoNota() {
@@ -1918,6 +1944,236 @@ window.addEventListener("error", function (e) {
     "Novembro",
     "Dezembro",
   ];
+  /* ================= Bancos simples (perfis financeiros e cadastro de serviços) ================= */
+  /**
+   * Cria um "banco" guardado num arquivo JSON do repositório privado (uma lista de itens),
+   * com cópia neste aparelho quando o token não tem senha. aoMudar() redesenha as telas.
+   */
+  function criarBanco(path, lsKey, aoMudar) {
+    const b = { dados: [], sha: null, carregado: false };
+    try {
+      b.dados = JSON.parse(lsGet(lsKey) || "[]");
+    } catch (e) {
+      b.dados = [];
+    }
+    if (!Array.isArray(b.dados) || isProt()) {
+      b.dados = [];
+      try {
+        localStorage.removeItem(lsKey);
+      } catch (e) {}
+    }
+    const url = (c) =>
+      "https://api.github.com/repos/" + c.repo + "/contents/" + path;
+    b.persist = () => {
+      if (isProt()) {
+        try {
+          localStorage.removeItem(lsKey);
+        } catch (e) {}
+      } else lsSet(lsKey, JSON.stringify(b.dados));
+    };
+    /** Baixa a lista do GitHub (arquivo novo = mantém o que já existe aqui). */
+    b.load = async () => {
+      const c = cfg();
+      if (!c.repo || !c.token) {
+        b.carregado = true;
+        return false;
+      }
+      const r = await fetch(url(c) + "?t=" + Date.now(), {
+        headers: ghHead(c),
+        cache: "no-store",
+      });
+      if (r.status === 404) {
+        b.sha = null;
+        b.carregado = true;
+        return true;
+      }
+      if (!r.ok) throw new Error(ghErr(r.status));
+      const j = await r.json();
+      b.sha = j.sha;
+      const raw = b64dec(j.content || "").trim();
+      let arr = [];
+      if (raw) {
+        try {
+          arr = JSON.parse(raw);
+        } catch (e) {
+          throw new Error(
+            "o arquivo " +
+              path +
+              " não é um JSON válido. Apague-o no GitHub e tente de novo",
+          );
+        }
+      }
+      b.dados = Array.isArray(arr) ? arr : [];
+      b.carregado = true;
+      return true;
+    };
+    /** Envia a lista para o GitHub. */
+    b.push = async (msg) => {
+      const c = cfg();
+      const body = {
+        message: msg,
+        content: b64enc(JSON.stringify(b.dados, null, 1)),
+      };
+      if (b.sha) body.sha = b.sha;
+      const r = await fetch(url(c), {
+        method: "PUT",
+        headers: Object.assign(
+          { "Content-Type": "application/json" },
+          ghHead(c),
+        ),
+        body: JSON.stringify(body),
+      });
+      if (r.status === 409 || r.status === 422) {
+        const e = new Error("conflito");
+        e.conflict = true;
+        throw e;
+      }
+      if (!r.ok) throw new Error(ghErr(r.status));
+      b.sha = (await r.json()).content.sha;
+    };
+    /** Aplica uma alteração e sincroniza (GitHub ou só neste aparelho). */
+    b.sync = async (mut, okMsg, commitMsg) => {
+      if (isProt() && !(await ensureUnlocked())) {
+        setSync("⚠️ Não salvo: senha não informada.");
+        return false;
+      }
+      const c = cfg();
+      if (!(c.repo && c.token)) {
+        mut(b.dados);
+        b.persist();
+        setSync(
+          "💾 " +
+            okMsg +
+            " (somente neste aparelho). Toque em ⚙️ para guardar no GitHub.",
+        );
+        aoMudar();
+        return true;
+      }
+      for (let t = 0; t < 2; t++) {
+        let applied = false;
+        try {
+          await b.load();
+          mut(b.dados);
+          applied = true;
+          b.persist();
+          await b.push(commitMsg);
+          setSync("✅ " + okMsg + " no GitHub (" + c.repo + ")");
+          markSync(true);
+          aoMudar();
+          return true;
+        } catch (e) {
+          if (e && e.conflict && t === 0) continue;
+          if (!applied) mut(b.dados);
+          b.persist();
+          markSync(false);
+          setSync(
+            isProt()
+              ? "⚠️ Não salvou no GitHub: " +
+                  ((e && e.message) || e) +
+                  ". Tente de novo."
+              : "⚠️ " +
+                  okMsg +
+                  " só neste aparelho. GitHub: " +
+                  ((e && e.message) || e),
+          );
+          aoMudar();
+          return false;
+        }
+      }
+    };
+    return b;
+  }
+
+  /* ----- Perfis financeiros (perfis.json) ----- */
+  const perfis = criarBanco("perfis.json", "axion_nfse_perfis", () => {
+    renderPerfis();
+    renderFin();
+    renderHome();
+  });
+  /** Nome de um perfil a partir do id. */
+  function nomePerfil(id) {
+    const p = perfis.dados.find((x) => x.id === id);
+    return p ? p.nome : id === "PF" ? "Filipe" : String(id || "");
+  }
+  /** Nome do perfil sem acentos e espaços, para nomes de arquivo. */
+  const slugPerfil = (id) =>
+    nomePerfil(id)
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[^A-Za-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "perfil";
+  /**
+   * Primeira vez: cria o perfil "Filipe" (no lugar do antigo PF, mantendo os lançamentos).
+   * O antigo PJ só vira perfil se tiver lançamentos, para nada se perder.
+   */
+  async function prepararPerfis() {
+    if (perfis.dados.length) return;
+    const novos = [{ id: "PF", nome: "Filipe", criadoEm: Date.now() }];
+    if (fin.some((x) => x.ledger === "PJ"))
+      novos.push({ id: "PJ", nome: "PJ", criadoEm: Date.now() });
+    await perfis.sync(
+      (arr) => {
+        if (!arr.length) novos.forEach((n) => arr.push(n));
+      },
+      "Perfis financeiros criados",
+      "Finanças: perfis iniciais",
+    );
+  }
+  /** Garante financeiro e perfis carregados (pede a senha se preciso). */
+  async function prepararFinancas() {
+    if (isProt() && !(await ensureUnlocked())) {
+      say("🔒 Senha necessária para usar as finanças.", true);
+      return false;
+    }
+    const c = cfg();
+    if (c.repo && c.token && !perfis.carregado) {
+      try {
+        await finLoad();
+        persistFin();
+        await perfis.load();
+        perfis.persist();
+      } catch (e) {
+        say(
+          "⚠️ Não consegui carregar os perfis: " + ((e && e.message) || e),
+          true,
+        );
+        return false;
+      }
+    }
+    await prepararPerfis();
+    return perfis.dados.length > 0;
+  }
+  /** Menu para escolher o perfil (e o tipo) do lançamento. Devolve { ledger, tipo } ou null. */
+  async function escolherPerfil(titulo, tipos) {
+    if (!(await prepararFinancas())) return null;
+    const botoes = [];
+    tipos.forEach((t) =>
+      perfis.dados.forEach((p) =>
+        botoes.push({
+          id: p.id + "|" + t,
+          rotulo:
+            (t === "entrada" ? "💰 " : "💸 ") +
+            esc(p.nome) +
+            " · " +
+            (t === "entrada" ? "Entrada (receita)" : "Despesa"),
+          sec: t !== "entrada",
+        }),
+      ),
+    );
+    botoes.push({ id: "cancelar", rotulo: "Cancelar", sec: true });
+    const r = await askText({ titulo: titulo, semTexto: true, botoes: botoes });
+    if (r.acao === "cancelar") return null;
+    const i = r.acao.lastIndexOf("|");
+    return { ledger: r.acao.slice(0, i), tipo: r.acao.slice(i + 1) };
+  }
+
+  /* ----- Cadastro de serviços (servicos.json) ----- */
+  const catalogo = criarBanco("servicos.json", "axion_nfse_servicos", () => {
+    renderCat();
+    atualizarListaSvc();
+    renderHubs();
+  });
+
   const CATS_ENTRADA = [
     "Salário",
     "Serviço",
@@ -1925,32 +2181,25 @@ window.addEventListener("error", function (e) {
     "Venda",
     "Outros",
   ];
-  const CATS_DESPESA = {
-    PF: [
-      "Moradia",
-      "Contas (água, luz, telefone)",
-      "Cartão de crédito",
-      "Financiamento/Consórcio",
-      "Dízimo/Doações",
-      "Saúde",
-      "Transporte",
-      "Alimentação",
-      "Educação",
-      "Impostos/Taxas",
-      "Outros",
-    ],
-    PJ: [
-      "Impostos (DAS)",
-      "Ferramentas/Software",
-      "Material/Peças",
-      "Transporte/Viagem",
-      "Marketing",
-      "Contador",
-      "Retirada (pró-labore)",
-      "Dízimo/Doações",
-      "Outros",
-    ],
-  };
+  const CATS_DESPESA = [
+    "Moradia",
+    "Contas (água, luz, telefone)",
+    "Cartão de crédito",
+    "Financiamento/Consórcio",
+    "Dízimo/Doações",
+    "Saúde",
+    "Transporte",
+    "Alimentação",
+    "Educação",
+    "Impostos (DAS)",
+    "Impostos/Taxas",
+    "Ferramentas/Software",
+    "Material/Peças",
+    "Marketing",
+    "Contador",
+    "Retirada (pró-labore)",
+    "Outros",
+  ];
   let fin = [];
   try {
     fin = JSON.parse(lsGet(LS_FIN) || "[]");
@@ -1964,7 +2213,7 @@ window.addEventListener("error", function (e) {
     } catch (e) {}
   }
   let finSha = null;
-  let finLedger = "PJ"; // "PJ" ou "PF"
+  let finLedger = "PF"; // id do perfil financeiro aberto
   const pad2 = (n) => String(n).padStart(2, "0");
   /** Chave do mês: "2026-10". */
   function mesKey(d) {
@@ -2222,11 +2471,19 @@ window.addEventListener("error", function (e) {
   function renderFin() {
     const box = $("#finbox");
     if (!box || box.hidden) return;
-    document
-      .querySelectorAll("#f_tabs .chip")
-      .forEach((b) =>
-        b.classList.toggle("on", b.getAttribute("data-l") === finLedger),
-      );
+    $("#f_title").textContent = "💰 " + nomePerfil(finLedger);
+    $("#f_tabs").innerHTML = perfis.dados
+      .map(
+        (p) =>
+          '<button class="chip' +
+          (p.id === finLedger ? " on" : "") +
+          '" data-l="' +
+          esc(p.id) +
+          '">👤 ' +
+          esc(p.nome) +
+          "</button>",
+      )
+      .join("");
     const cur = mesKey(new Date());
     $("#f_mes").innerHTML = opcoesMes()
       .map(
@@ -2311,7 +2568,7 @@ window.addEventListener("error", function (e) {
         (tipo === "entrada" ? "entrada" : "despesa") +
         " · " +
         finLedger;
-      const cats = tipo === "entrada" ? CATS_ENTRADA : CATS_DESPESA[finLedger];
+      const cats = tipo === "entrada" ? CATS_ENTRADA : CATS_DESPESA;
       $("#fi_cat").innerHTML = cats
         .map((c) => "<option>" + esc(c) + "</option>")
         .join("");
@@ -2383,7 +2640,7 @@ window.addEventListener("error", function (e) {
         arr.push(rec);
       },
       (tipo === "entrada" ? "Entrada" : "Despesa") + " salva",
-      "Financeiro " + finLedger + ": " + rec.nome,
+      "Financeiro " + nomePerfil(finLedger) + ": " + rec.nome,
     );
     await oferecerReplica(rec);
   }
@@ -2515,7 +2772,7 @@ window.addEventListener("error", function (e) {
             criadoEm: Date.now(),
           });
       },
-      "Dízimo calculado em " + ledger + " (" + brl(valor) + ")",
+      "Dízimo calculado em " + nomePerfil(ledger) + " (" + brl(valor) + ")",
       "Dízimo " + ledger + " " + finMes,
     );
   }
@@ -2535,7 +2792,7 @@ window.addEventListener("error", function (e) {
           : " (a pagar)"
         : "");
     const linhas = [
-      "📊 CONTROLE FINANCEIRO · " + finLedger,
+      "📊 CONTROLE FINANCEIRO · " + nomePerfil(finLedger),
       "📅 " + nomeMes(finMes),
       "",
       "💰 ENTRADAS",
@@ -2556,7 +2813,7 @@ window.addEventListener("error", function (e) {
   /** Mostra o resumo (editável) e envia por WhatsApp ou copia o texto. */
   async function enviarResumo() {
     const r = await askText({
-      titulo: "📤 Resumo · " + finLedger + " · " + nomeMes(finMes),
+      titulo: "📤 Resumo · " + nomePerfil(finLedger) + " · " + nomeMes(finMes),
       texto: resumoTexto(),
       botoes: [
         { id: "wpp", rotulo: "WhatsApp" },
@@ -2615,7 +2872,7 @@ window.addEventListener("error", function (e) {
           ["\ufeff" + rows.map((r) => r.map(csvCell).join(";")).join("\r\n")],
           { type: "text/csv;charset=utf-8" },
         ),
-        "financeiro-" + finLedger + "-" + finMes + ".csv",
+        "financeiro-" + slugPerfil(finLedger) + "-" + finMes + ".csv",
       );
       say("Tabela gerada.");
     } catch (e) {
@@ -2638,7 +2895,7 @@ window.addEventListener("error", function (e) {
       doc.setFontSize(10);
       doc.text(
         "Controle financeiro " +
-          finLedger +
+          nomePerfil(finLedger) +
           " · " +
           nomeMes(finMes) +
           " · gerado em " +
@@ -2714,7 +2971,7 @@ window.addEventListener("error", function (e) {
       );
       await saveBlob(
         doc.output("blob"),
-        "financeiro-" + finLedger + "-" + finMes + ".pdf",
+        "financeiro-" + slugPerfil(finLedger) + "-" + finMes + ".pdf",
       );
       say("PDF gerado.");
     } catch (e) {
@@ -2722,34 +2979,34 @@ window.addEventListener("error", function (e) {
     }
   }
 
-  /** Depois de lançar uma receita no PJ, oferece copiá-la também para a pessoa física. */
+  /** Depois de lançar uma receita, oferece copiá-la para outro perfil (se houver mais de um). */
   async function oferecerReplica(rec) {
-    if (
-      rec.ledger !== "PJ" ||
-      rec.tipo !== "entrada" ||
-      !fin.some((x) => x.id === rec.id)
-    )
-      return;
+    if (rec.tipo !== "entrada" || !fin.some((x) => x.id === rec.id)) return;
+    const outros = perfis.dados.filter((p) => p.id !== rec.ledger);
+    if (!outros.length) return;
     const r = await askText({
-      titulo: "👤 Replicar na PF? · " + rec.nome + " · " + brl(rec.valor),
+      titulo:
+        "👤 Replicar em outro perfil? · " + rec.nome + " · " + brl(rec.valor),
       semTexto: true,
-      botoes: [
-        { id: "sim", rotulo: "👤 Replicar na PF (mesmo valor)" },
-        { id: "nao", rotulo: "Não replicar", sec: true },
-      ],
+      botoes: outros
+        .map((p) => ({
+          id: p.id,
+          rotulo: "👤 Replicar em " + esc(p.nome) + " (mesmo valor)",
+        }))
+        .concat([{ id: "nao", rotulo: "Não replicar", sec: true }]),
     });
-    if (r.acao !== "sim") return;
+    if (r.acao === "nao") return;
     const copia = Object.assign({}, rec, {
       id: novoId(),
-      ledger: "PF",
+      ledger: r.acao,
       criadoEm: Date.now(),
     });
     await finSync(
       (arr) => {
         arr.push(copia);
       },
-      "Receita replicada na PF",
-      "Replicar na PF: " + rec.nome,
+      "Receita replicada em " + nomePerfil(r.acao),
+      "Replicar em " + nomePerfil(r.acao) + ": " + rec.nome,
     );
   }
   /** Botão "Lançar" da nota; mostra onde ela já foi lançada. */
@@ -2758,7 +3015,8 @@ window.addEventListener("error", function (e) {
     const onde = [];
     fin.forEach((x) => {
       if (x.notaId !== n.id) return;
-      const t = x.ledger + (x.tipo === "despesa" ? " (despesa)" : "");
+      const t =
+        nomePerfil(x.ledger) + (x.tipo === "despesa" ? " (despesa)" : "");
       if (onde.indexOf(t) < 0) onde.push(t);
     });
     return (
@@ -2775,21 +3033,13 @@ window.addEventListener("error", function (e) {
   async function lancarNota(id) {
     const n = notes.find((x) => x.id === id);
     if (!n) return;
-    const r = await askText({
-      titulo: "💸 Lançar no financeiro · " + n.nome + " · " + n.d.v.op,
-      semTexto: true,
-      botoes: [
-        { id: "PJ-entrada", rotulo: "🏢 PJ · Entrada (receita)" },
-        { id: "PF-entrada", rotulo: "👤 PF · Entrada (receita)" },
-        { id: "PJ-despesa", rotulo: "🏢 PJ · Despesa", sec: true },
-        { id: "PF-despesa", rotulo: "👤 PF · Despesa", sec: true },
-        { id: "cancelar", rotulo: "Cancelar", sec: true },
-      ],
-    });
-    if (r.acao === "cancelar") return;
-    const p = r.acao.split("-"),
-      ledger = p[0],
-      tipo = p[1];
+    const esc2 = await escolherPerfil(
+      "💸 Lançar no financeiro · " + n.nome + " · " + n.d.v.op,
+      ["entrada", "despesa"],
+    );
+    if (!esc2) return;
+    const ledger = esc2.ledger,
+      tipo = esc2.tipo;
     const rec = {
       id: novoId(),
       ledger: ledger,
@@ -2814,13 +3064,17 @@ window.addEventListener("error", function (e) {
           dup = true;
         else arr.push(rec);
       },
-      "Nota lançada no " + ledger + " (" + tipo + ")",
-      "Lançar " + n.nome + " no " + ledger,
+      "Nota lançada em " + nomePerfil(ledger) + " (" + tipo + ")",
+      "Lançar " + n.nome + " em " + nomePerfil(ledger),
     );
     refreshList();
     if (dup) {
       say(
-        "Esta nota já foi lançada no " + ledger + " como " + tipo + ".",
+        "Esta nota já foi lançada em " +
+          nomePerfil(ledger) +
+          " como " +
+          tipo +
+          ".",
         true,
       );
       return;
@@ -2828,6 +3082,7 @@ window.addEventListener("error", function (e) {
     finMes = rec.data.slice(0, 7);
     finLedger = ledger;
     await oferecerReplica(rec);
+    refreshList();
   }
   $("#launchbtn").addEventListener("click", () => {
     if (!current) return;
@@ -2839,15 +3094,24 @@ window.addEventListener("error", function (e) {
     lancarNota(id);
   });
 
-  /** Abre a tela do financeiro (pede a senha e sincroniza, se preciso). */
-  async function showFin() {
+  /** Finanças: sem id abre "Meus perfis"; com id abre o perfil (pede a senha e sincroniza, se preciso). */
+  async function showFin(id) {
     if (isProt() && !(await ensureUnlocked())) {
-      say("🔒 Senha necessária para abrir o financeiro.", true);
+      say("🔒 Senha necessária para abrir as finanças.", true);
+      return;
+    }
+    if (typeof id === "string" && id) {
+      if (!perfis.dados.length) await prepararFinancas();
+      finLedger = id;
+      hideAll();
+      $("#finbox").hidden = false;
+      renderFin();
+      window.scrollTo({ top: 0 });
       return;
     }
     hideAll();
-    $("#finbox").hidden = false;
-    renderFin();
+    $("#finperfis").hidden = false;
+    renderPerfis();
     window.scrollTo({ top: 0 });
     const c = cfg();
     if (c.repo && c.token) {
@@ -2857,6 +3121,8 @@ window.addEventListener("error", function (e) {
         persist();
         await finLoad();
         persistFin();
+        await perfis.load();
+        perfis.persist();
         markSync(true);
         setSync("✅ Sincronizado com " + c.repo);
       } catch (e) {
@@ -2867,13 +3133,14 @@ window.addEventListener("error", function (e) {
             ". Mostrando os dados deste aparelho.",
         );
       }
-      renderFin();
     } else
       setSync(
         "💾 Dados guardados só neste aparelho. Toque em ⚙️ para guardar no GitHub.",
       );
+    await prepararPerfis();
+    renderPerfis();
   }
-  $("#finbtn").addEventListener("click", showFin);
+  $("#finbtn").addEventListener("click", () => showFin());
   $("#f_tabs").addEventListener("click", (ev) => {
     const b = ev.target.closest("[data-l]");
     if (!b) return;
@@ -2961,6 +3228,7 @@ window.addEventListener("error", function (e) {
       " · " +
       brl(mes);
     renderDash();
+    renderHubs();
   }
   /** Quadrados, menu lateral e cartões do painel levam para as ferramentas. */
   document.addEventListener("click", (ev) => {
@@ -2968,11 +3236,16 @@ window.addEventListener("error", function (e) {
     if (b) {
       const go = b.getAttribute("data-go");
       if (go === "nota") openPicker();
-      else if (go === "fin") showFin();
-      else if (go === "rel") showRep();
+      else if (go === "nf") showNfHub();
       else if (go === "notas") showList();
-      else if (go === "os") showOs();
-      else if (go === "home") $("#cancel").click();
+      else if (go === "rel") showRep();
+      else if (go === "os") showOsHub();
+      else if (go === "osnew") novaOs();
+      else if (go === "oslist") showOs();
+      else if (go === "cat") showCat();
+      else if (go === "osrep") showOsRep();
+      else if (go === "fin") showFin();
+      else if (go === "home") irInicio();
       else if (go === "cfg") $("#cfgbtn").click();
       return;
     }
@@ -2998,9 +3271,8 @@ window.addEventListener("error", function (e) {
     }
     const dp = ev.target.closest("[data-dpagar]");
     if (dp) {
-      finLedger = dp.getAttribute("data-dpagar");
       finMes = mesKey(new Date());
-      showFin();
+      showFin(dp.getAttribute("data-dpagar"));
     }
   });
 
@@ -3155,7 +3427,7 @@ window.addEventListener("error", function (e) {
         at: 'data-dpagar="' + esc(x.ledger) + '"',
         ic: "💸",
         t: "Pagar " + x.nome,
-        s: x.ledger + " · " + dataBR(x.data).slice(0, 5),
+        s: nomePerfil(x.ledger) + " · " + dataBR(x.data).slice(0, 5),
         v: x.valor,
       }),
     );
@@ -3277,6 +3549,10 @@ window.addEventListener("error", function (e) {
       persistFin();
       await osLoad();
       persistOs();
+      await perfis.load();
+      perfis.persist();
+      await catalogo.load();
+      catalogo.persist();
       markSync(true);
     } catch (e) {
       markSync(false);
@@ -3592,6 +3868,9 @@ window.addEventListener("error", function (e) {
       try {
         await osLoad();
         persistOs();
+        await catalogo.load();
+        catalogo.persist();
+        atualizarListaSvc();
         markSync(true);
         setSync("✅ Sincronizado com " + c.repo);
       } catch (e) {
@@ -3638,7 +3917,7 @@ window.addEventListener("error", function (e) {
       i +
       '" data-modo="' +
       s.modo +
-      '"><input class="o-nome" type="text" placeholder="Nome do serviço" autocomplete="off" value="' +
+      '"><input class="o-nome" type="text" placeholder="Nome do serviço" list="svc-list" autocomplete="off" value="' +
       esc(s.nome) +
       '" /><div class="osrow-n"><label>Cobrança<select class="o-modo"><option value="hora"' +
       (s.modo === "hora" ? " selected" : "") +
@@ -3932,16 +4211,12 @@ window.addEventListener("error", function (e) {
     const o = os.find((x) => x.id === id);
     if (!o) return;
     const T = osTotals(o);
-    const r = await askText({
-      titulo: "💸 Lançar OS " + osNum(o) + " · " + brl(T.total),
-      semTexto: true,
-      botoes: [
-        { id: "PJ", rotulo: "🏢 PJ · Entrada (receita)" },
-        { id: "PF", rotulo: "👤 PF · Entrada (receita)" },
-        { id: "cancelar", rotulo: "Cancelar", sec: true },
-      ],
-    });
-    if (r.acao === "cancelar") return;
+    const esc2 = await escolherPerfil(
+      "💸 Lançar OS " + osNum(o) + " · " + brl(T.total),
+      ["entrada"],
+    );
+    if (!esc2) return;
+    const r = { acao: esc2.ledger };
     const rec = {
       id: novoId(),
       ledger: r.acao,
@@ -3961,11 +4236,11 @@ window.addEventListener("error", function (e) {
         if (arr.some((x) => x.osId === o.id && x.ledger === r.acao)) dup = true;
         else arr.push(rec);
       },
-      "OS lançada no " + r.acao,
-      "Lançar OS " + osNum(o) + " no " + r.acao,
+      "OS lançada em " + nomePerfil(r.acao),
+      "Lançar OS " + osNum(o) + " em " + nomePerfil(r.acao),
     );
     if (dup) {
-      say("Esta ordem já foi lançada no " + r.acao + ".", true);
+      say("Esta ordem já foi lançada em " + nomePerfil(r.acao) + ".", true);
       return;
     }
     finMes = rec.data.slice(0, 7);
@@ -4055,8 +4330,24 @@ window.addEventListener("error", function (e) {
         +row.dataset.i
       ];
       if (!it) return;
-      if (t.classList.contains("o-nome")) it.nome = t.value;
-      else if (t.classList.contains("o-qtd")) it.qtd = parseValor(t.value) || 0;
+      if (t.classList.contains("o-nome")) {
+        it.nome = t.value;
+        // escolheu um serviço do cadastro: preenche cobrança e valor (só numa linha ainda sem valor)
+        const cad =
+          row.dataset.k === "s" && !it.vh && !it.valor && acharServico(t.value);
+        if (cad) {
+          Object.assign(it, {
+            nome: cad.nome,
+            modo: cad.modo,
+            vh: cad.modo === "hora" ? cad.valor : 0,
+            valor: cad.modo === "fixo" ? cad.valor : 0,
+          });
+          osLinhas();
+          osAtualizarTotais();
+          return;
+        }
+      } else if (t.classList.contains("o-qtd"))
+        it.qtd = parseValor(t.value) || 0;
       else if (t.classList.contains("o-val"))
         it.valor = parseValor(t.value) || 0;
       else if (t.classList.contains("o-h")) it.horas = parseHoras(t.value);
@@ -4156,6 +4447,669 @@ window.addEventListener("error", function (e) {
     await showList();
     $("#q").value = v;
     refreshList();
+  });
+
+  /* ================= Ferramentas com subferramentas (quadrados) ================= */
+  /** Atualiza os números que aparecem nos quadrados das subferramentas. */
+  function renderHubs() {
+    if (!$("#hubNotas")) return;
+    const now = new Date(),
+      mk = mesKey(now);
+    let mesNf = 0;
+    notes.forEach((n) => {
+      const x = ndate(n);
+      if (
+        ativa(n) &&
+        x &&
+        x.y === now.getFullYear() &&
+        x.m === now.getMonth() + 1
+      )
+        mesNf += vOf(n);
+    });
+    $("#hubNotas").textContent =
+      notes.length + (notes.length === 1 ? " nota salva" : " notas salvas");
+    $("#hubNfRel").textContent = "Faturado no mês · " + brl(mesNf);
+    const abertas = os.filter(
+      (o) => (o.status || "aberta") === "aberta",
+    ).length;
+    const mesOs = os
+      .filter((o) => String(o.data || "").slice(0, 7) === mk)
+      .reduce((s, o) => s + osTotals(o).total, 0);
+    $("#hubOsNova").textContent =
+      "Próxima: Nº " + String(osProximo()).padStart(5, "0");
+    $("#hubOsLista").textContent =
+      os.length + " ordem(ns) · " + abertas + " aberta(s)";
+    $("#hubCat").textContent =
+      catalogo.dados.length + " serviço(s) cadastrado(s)";
+    $("#hubOsRel").textContent = "No mês · " + brl(mesOs);
+  }
+  /** Abre a ferramenta Nota Fiscal (quadrados: enviar, minhas notas, relatórios). */
+  function showNfHub() {
+    hideAll();
+    $("#nfhub").hidden = false;
+    renderHubs();
+    say("");
+    window.scrollTo({ top: 0 });
+  }
+  /** Abre a ferramenta Ordem de serviço (quadrados: nova, minhas OS, cadastro, relatórios). */
+  function showOsHub() {
+    hideAll();
+    $("#oshub").hidden = false;
+    renderHubs();
+    say("");
+    window.scrollTo({ top: 0 });
+  }
+  /** Carrega ordens e cadastro (pede a senha se preciso). */
+  async function prepararOs() {
+    if (isProt() && !(await ensureUnlocked())) {
+      say("🔒 Senha necessária para usar as ordens de serviço.", true);
+      return false;
+    }
+    const c = cfg();
+    if (c.repo && c.token) {
+      try {
+        await osLoad();
+        persistOs();
+        await catalogo.load();
+        catalogo.persist();
+      } catch (e) {
+        say(
+          "⚠️ Não sincronizou: " +
+            ((e && e.message) || e) +
+            ". Usando os dados deste aparelho.",
+          true,
+        );
+      }
+    }
+    atualizarListaSvc();
+    return true;
+  }
+  /** Nova OS: confere a numeração com o GitHub antes de abrir o editor. */
+  async function novaOs() {
+    if (!(await prepararOs())) return;
+    osEditor(null);
+  }
+
+  /* ----- Perfis financeiros: tela "Meus perfis" ----- */
+  /** Desenha os cartões dos perfis com o resumo do mês atual. */
+  function renderPerfis() {
+    const box = $("#perfis_list");
+    if (!box || $("#finperfis").hidden) return;
+    const mk = mesKey(new Date());
+    box.innerHTML = perfis.dados.length
+      ? perfis.dados
+          .map((p) => {
+            const itens = fin.filter(
+              (x) => x.ledger === p.id && String(x.data).slice(0, 7) === mk,
+            );
+            const T = totaisFin(itens),
+              id = esc(p.id);
+            return (
+              '<div class="pcard" data-perfil="' +
+              id +
+              '"><div class="pc-top"><span class="av">' +
+              esc(inicial(p.nome)) +
+              '</span><div class="pc-name"><b>' +
+              esc(p.nome) +
+              "</b><small>" +
+              nomeMes(mk) +
+              " · " +
+              itens.length +
+              " lançamento(s)</small></div>" +
+              '<button class="x" data-prename="' +
+              id +
+              '" aria-label="Renomear perfil">✏️</button>' +
+              '<button class="x" data-pdel="' +
+              id +
+              '" aria-label="Excluir perfil">🗑</button></div>' +
+              '<div class="fcards"><div class="fcard"><span>💰 Entradas</span><b>' +
+              brl(T.e) +
+              "</b></div>" +
+              '<div class="fcard"><span>💸 Despesas</span><b>' +
+              brl(T.d) +
+              "</b></div>" +
+              '<div class="fcard ' +
+              (T.saldo >= 0 ? "pos" : "neg") +
+              '"><span>Saldo</span><b>' +
+              brl(T.saldo) +
+              "</b></div></div>" +
+              (T.aPagar > 0
+                ? '<div class="small">⏳ A pagar: <b>' +
+                  brl(T.aPagar) +
+                  "</b></div>"
+                : "") +
+              "</div>"
+            );
+          })
+          .join("")
+      : '<div class="small">Nenhum perfil ainda. Toque em “Criar perfil financeiro”.</div>';
+  }
+  /** Pede um nome de perfil e confere se não está vazio nem repetido. */
+  async function pedirNomePerfil(titulo, atual, idAtual) {
+    const r = await askText({
+      titulo: titulo,
+      texto: atual || "",
+      placeholder: "Ex.: Filipe, Ari, Empresa",
+      botoes: [
+        { id: "ok", rotulo: "Salvar" },
+        { id: "cancelar", rotulo: "Cancelar", sec: true },
+      ],
+    });
+    if (r.acao !== "ok") return null;
+    const nome = r.texto.replace(/\s+/g, " ").trim().slice(0, 40);
+    if (!nome) {
+      say("Digite um nome para o perfil.", true);
+      return null;
+    }
+    if (
+      perfis.dados.some(
+        (p) =>
+          p.id !== idAtual &&
+          p.nome.toLocaleLowerCase("pt-BR") === nome.toLocaleLowerCase("pt-BR"),
+      )
+    ) {
+      say("Já existe um perfil chamado " + nome + ".", true);
+      return null;
+    }
+    return nome;
+  }
+  $("#perfil_new").addEventListener("click", async () => {
+    if (!(await prepararFinancas())) return;
+    const nome = await pedirNomePerfil("➕ Novo perfil financeiro");
+    if (!nome) return;
+    await perfis.sync(
+      (arr) => {
+        arr.push({ id: novoId(), nome: nome, criadoEm: Date.now() });
+      },
+      "Perfil " + nome + " criado",
+      "Finanças: novo perfil " + nome,
+    );
+  });
+  $("#perfis_list").addEventListener("click", async (ev) => {
+    const rn = ev.target.closest("[data-prename]");
+    if (rn) {
+      ev.stopPropagation();
+      const id = rn.getAttribute("data-prename"),
+        p = perfis.dados.find((x) => x.id === id);
+      if (!p) return;
+      const nome = await pedirNomePerfil("✏️ Renomear perfil", p.nome, id);
+      if (nome && nome !== p.nome)
+        await perfis.sync(
+          (arr) => {
+            const x = arr.find((y) => y.id === id);
+            if (x) x.nome = nome;
+          },
+          "Perfil renomeado para " + nome,
+          "Finanças: renomear perfil",
+        );
+      return;
+    }
+    const dl = ev.target.closest("[data-pdel]");
+    if (dl) {
+      ev.stopPropagation();
+      const id = dl.getAttribute("data-pdel"),
+        p = perfis.dados.find((x) => x.id === id);
+      if (!p) return;
+      const n = fin.filter((x) => x.ledger === id).length;
+      let ok = true;
+      try {
+        ok = confirm(
+          'Excluir o perfil "' +
+            p.nome +
+            '"' +
+            (n ? " e os seus " + n + " lançamento(s)" : "") +
+            "? Isso não pode ser desfeito.",
+        );
+      } catch (e) {}
+      if (!ok) return;
+      if (n) {
+        const okFin = await finSync(
+          (arr) => {
+            for (let i = arr.length - 1; i >= 0; i--)
+              if (arr[i].ledger === id) arr.splice(i, 1);
+          },
+          "Lançamentos do perfil excluídos",
+          "Finanças: excluir lançamentos de " + p.nome,
+        );
+        if (!okFin) return;
+      }
+      await perfis.sync(
+        (arr) => {
+          const i = arr.findIndex((y) => y.id === id);
+          if (i >= 0) arr.splice(i, 1);
+        },
+        "Perfil " + p.nome + " excluído",
+        "Finanças: excluir perfil " + p.nome,
+      );
+      return;
+    }
+    const pc = ev.target.closest("[data-perfil]");
+    if (pc) showFin(pc.getAttribute("data-perfil"));
+  });
+
+  /* ----- Cadastro de serviços ----- */
+  /** Serviço do cadastro com esse nome (sem diferenciar maiúsculas). */
+  function acharServico(nome) {
+    const n = String(nome || "")
+      .trim()
+      .toLocaleLowerCase("pt-BR");
+    return n
+      ? catalogo.dados.find((s) => s.nome.toLocaleLowerCase("pt-BR") === n)
+      : null;
+  }
+  /** Preço do serviço em texto: "R$ 60,88/h" ou "R$ 50,00 fixo". */
+  const precoSvc = (s) =>
+    s.modo === "hora" ? brl(s.valor) + "/h" : brl(s.valor) + " fixo";
+  /** Sugestões de nome na OS (lista do cadastro). */
+  function atualizarListaSvc() {
+    const dl = $("#svc-list");
+    if (dl)
+      dl.innerHTML = catalogo.dados
+        .map((s) => '<option value="' + esc(s.nome) + '"></option>')
+        .join("");
+  }
+  /** Desenha a lista do cadastro de serviços. */
+  function renderCat() {
+    const box = $("#cat_items");
+    if (!box) return;
+    const q = (($("#cat_q") && $("#cat_q").value) || "").toLowerCase().trim();
+    const arr = catalogo.dados
+      .filter((s) => !q || s.nome.toLowerCase().includes(q))
+      .sort((x, y) => x.nome.localeCompare(y.nome, "pt-BR"));
+    box.innerHTML = arr.length
+      ? arr
+          .map(
+            (s) =>
+              '<div class="item" data-svc="' +
+              esc(s.id) +
+              '"><div style="flex:1;min-width:0"><div class="nm">' +
+              esc(s.nome) +
+              '</div><div class="svc-sub">' +
+              (s.modo === "hora" ? "Por hora · " : "Valor fixo · ") +
+              precoSvc(s) +
+              '</div></div><button class="badge" data-svcedit="' +
+              esc(s.id) +
+              '">✏️ Editar</button></div>',
+          )
+          .join("")
+      : '<div class="small" style="margin-top:12px">' +
+        (catalogo.dados.length
+          ? "Nenhum serviço encontrado."
+          : "Nenhum serviço cadastrado. Toque em “Novo serviço”.") +
+        "</div>";
+  }
+  /** Abre a tela do cadastro de serviços. */
+  async function showCat() {
+    if (!(await prepararOs())) return;
+    hideAll();
+    $("#catbox").hidden = false;
+    renderCat();
+    window.scrollTo({ top: 0 });
+  }
+  /** Janela para criar ou editar um serviço do cadastro. Devolve { acao, dados }. */
+  function abrirServico(s) {
+    return new Promise((res) => {
+      const m = $("#svcmodal");
+      const lbl = () => {
+        $("#sv_vlbl").textContent =
+          $("#sv_modo").value === "hora" ? "Valor/hora (R$)" : "Valor (R$)";
+      };
+      $("#sv_title").textContent = s ? "✏️ Editar serviço" : "➕ Novo serviço";
+      $("#sv_nome").value = s ? s.nome : "";
+      $("#sv_modo").value = s ? s.modo : "hora";
+      $("#sv_valor").value = s ? String(s.valor).replace(".", ",") : "";
+      $("#sv_err").textContent = "";
+      $("#sv_del").hidden = !s;
+      lbl();
+      $("#sv_modo").onchange = lbl;
+      m.hidden = false;
+      setTimeout(() => $("#sv_nome").focus(), 50);
+      const fim = (r) => {
+        m.hidden = true;
+        $("#sv_save").onclick =
+          $("#sv_del").onclick =
+          $("#sv_cancel").onclick =
+            null;
+        res(r);
+      };
+      $("#sv_cancel").onclick = () => fim({ acao: "cancelar" });
+      $("#sv_del").onclick = () => fim({ acao: "excluir" });
+      $("#sv_save").onclick = () => {
+        const nome = $("#sv_nome").value.replace(/\s+/g, " ").trim(),
+          valor = parseValor($("#sv_valor").value);
+        if (!nome || !(valor > 0)) {
+          $("#sv_err").textContent =
+            "Preencha o nome e um valor maior que zero.";
+          return;
+        }
+        const outro = acharServico(nome);
+        if (outro && (!s || outro.id !== s.id)) {
+          $("#sv_err").textContent = "Já existe um serviço com esse nome.";
+          return;
+        }
+        fim({
+          acao: "salvar",
+          dados: { nome: nome, modo: $("#sv_modo").value, valor: valor },
+        });
+      };
+    });
+  }
+  /** Cria ou edita um serviço do cadastro. */
+  async function editarServico(id) {
+    const s = id ? catalogo.dados.find((x) => x.id === id) : null;
+    const r = await abrirServico(s);
+    if (r.acao === "cancelar") return;
+    if (r.acao === "excluir") {
+      let ok = true;
+      try {
+        ok = confirm(
+          'Excluir o serviço "' +
+            s.nome +
+            '" do cadastro? As ordens já salvas não mudam.',
+        );
+      } catch (e) {}
+      if (ok)
+        await catalogo.sync(
+          (arr) => {
+            const i = arr.findIndex((x) => x.id === id);
+            if (i >= 0) arr.splice(i, 1);
+          },
+          "Serviço excluído",
+          "OS: excluir serviço " + s.nome,
+        );
+      return;
+    }
+    await catalogo.sync(
+      (arr) => {
+        const x = s && arr.find((y) => y.id === s.id);
+        if (x) Object.assign(x, r.dados);
+        else
+          arr.push(
+            Object.assign({ id: novoId(), criadoEm: Date.now() }, r.dados),
+          );
+      },
+      "Serviço " + r.dados.nome + " salvo",
+      "OS: serviço " + r.dados.nome,
+    );
+  }
+  $("#cat_new").addEventListener("click", () => editarServico(null));
+  $("#cat_q").addEventListener("input", renderCat);
+  $("#cat_items").addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-svc]");
+    if (b) editarServico(b.getAttribute("data-svc"));
+  });
+  /** OS: adiciona um serviço escolhido do cadastro. */
+  $("#os_addcat").addEventListener("click", async () => {
+    if (!catalogo.dados.length) {
+      say(
+        "Nenhum serviço cadastrado. Cadastre em Ordem de serviço → Cadastro de serviços.",
+        true,
+      );
+      return;
+    }
+    const lista = catalogo.dados
+      .slice()
+      .sort((x, y) => x.nome.localeCompare(y.nome, "pt-BR"));
+    const r = await askText({
+      titulo: "📋 Escolha o serviço",
+      semTexto: true,
+      botoes: lista
+        .map((s) => ({
+          id: s.id,
+          rotulo: esc(s.nome) + " · " + precoSvc(s),
+          sec: true,
+        }))
+        .concat([{ id: "cancelar", rotulo: "Cancelar", sec: true }]),
+    });
+    const s = catalogo.dados.find((x) => x.id === r.acao);
+    if (!s) return;
+    osDraft.servs.push({
+      nome: s.nome,
+      modo: s.modo,
+      horas: 0,
+      vh: s.modo === "hora" ? s.valor : 0,
+      valor: s.modo === "fixo" ? s.valor : 0,
+    });
+    osLinhas();
+    osAtualizarTotais();
+  });
+
+  /* ----- Relatórios de ordens de serviço ----- */
+  const OS_SIT = { aberta: "Aberta", concluida: "Concluída", paga: "Paga" };
+  /** Ordens do período escolhido, com totais por situação e por cliente. */
+  function osRepData() {
+    const R = repRange($("#or_per").value);
+    const lista = os
+      .filter((o) => {
+        const p = String(o.data || "").split("-");
+        return p.length === 3 && R.f({ y: +p[0], m: +p[1], d: +p[2] });
+      })
+      .sort(
+        (x, y) => (parseInt(x.numero, 10) || 0) - (parseInt(y.numero, 10) || 0),
+      );
+    const T = { total: 0, prod: 0, serv: 0, horas: 0, desc: 0 },
+      st = { aberta: 0, concluida: 0, paga: 0 },
+      cl = {};
+    lista.forEach((o) => {
+      const t = osTotals(o);
+      T.total += t.total;
+      T.prod += t.prod;
+      T.serv += t.serv;
+      T.horas += t.horas;
+      T.desc += t.desc;
+      st[o.status || "aberta"] += t.total;
+      const k = o.cliente || "-";
+      const c = (cl[k] = cl[k] || { nome: k, q: 0, v: 0 });
+      c.q++;
+      c.v += t.total;
+    });
+    return {
+      R: R,
+      lista: lista,
+      T: T,
+      st: st,
+      cli: Object.values(cl).sort((x, y) => y.v - x.v),
+    };
+  }
+  /** Desenha o relatório de ordens de serviço. */
+  function renderOsRep() {
+    const D = osRepData(),
+      pc = (v) => (D.T.total ? ((v / D.T.total) * 100).toFixed(0) + "%" : "0%");
+    $("#or_out").innerHTML =
+      '<div class="rcols"><div class="rcol"><div class="sect">Resumo · ' +
+      esc(D.R.t) +
+      "</div>" +
+      '<div class="row"><span>Ordens no período</span><b>' +
+      D.lista.length +
+      "</b></div>" +
+      '<div class="row"><span>Peças / produtos</span><b>' +
+      brl(D.T.prod) +
+      "</b></div>" +
+      '<div class="row"><span>Mão de obra' +
+      (D.T.horas ? " · " + fmtHoras(D.T.horas) : "") +
+      "</span><b>" +
+      brl(D.T.serv) +
+      "</b></div>" +
+      (D.T.desc
+        ? '<div class="row"><span>Descontos</span><b>− ' +
+          brl(D.T.desc) +
+          "</b></div>"
+        : "") +
+      '<div class="row total"><span>TOTAL</span><b>' +
+      brl(D.T.total) +
+      "</b></div>" +
+      '<div class="fcards"><div class="fcard"><span>🛠 Abertas</span><b>' +
+      brl(D.st.aberta) +
+      "</b></div>" +
+      '<div class="fcard"><span>✔️ A receber</span><b>' +
+      brl(D.st.concluida) +
+      "</b></div>" +
+      '<div class="fcard pos"><span>✅ Pagas</span><b>' +
+      brl(D.st.paga) +
+      "</b></div></div>" +
+      '</div><div class="rcol"><div class="sect">Por cliente</div>' +
+      (D.cli
+        .map(
+          (c) =>
+            '<div class="row"><span>' +
+            esc(c.nome) +
+            '<br><span class="small">' +
+            c.q +
+            " ordem(ns) · " +
+            pc(c.v) +
+            "</span></span><b>" +
+            brl(c.v) +
+            "</b></div>",
+        )
+        .join("") || '<div class="small">Sem ordens no período.</div>') +
+      '<div class="sect">Ordens do período</div>' +
+      (D.lista
+        .map(
+          (o) =>
+            '<div class="row"><span>OS ' +
+            osNum(o) +
+            " · " +
+            esc(o.cliente) +
+            '<br><span class="small">' +
+            dataBR(o.data) +
+            " · " +
+            OS_SIT[o.status || "aberta"] +
+            "</span></span><b>" +
+            brl(osTotals(o).total) +
+            "</b></div>",
+        )
+        .join("") || '<div class="small">Nenhuma.</div>') +
+      "</div></div>";
+  }
+  /** Abre os relatórios de ordens de serviço. */
+  async function showOsRep() {
+    if (!(await prepararOs())) return;
+    hideAll();
+    $("#osrep").hidden = false;
+    renderOsRep();
+    window.scrollTo({ top: 0 });
+  }
+  $("#or_per").addEventListener("change", renderOsRep);
+  $("#or_csv").addEventListener("click", async () => {
+    const D = osRepData();
+    const rows = [
+      [
+        "OS",
+        "Data",
+        "Cliente",
+        "Veículo",
+        "Situação",
+        "Peças",
+        "Mão de obra",
+        "Horas",
+        "Desconto",
+        "Total",
+      ],
+    ].concat(
+      D.lista.map((o) => {
+        const t = osTotals(o),
+          n = (v) => v.toFixed(2).replace(".", ",");
+        return [
+          osNum(o),
+          dataBR(o.data),
+          o.cliente,
+          o.veiculo || "",
+          OS_SIT[o.status || "aberta"],
+          n(t.prod),
+          n(t.serv),
+          t.horas ? fmtHoras(t.horas) : "",
+          n(t.desc),
+          n(t.total),
+        ];
+      }),
+    );
+    try {
+      await saveBlob(
+        new Blob(
+          ["﻿" + rows.map((r) => r.map(csvCell).join(";")).join("\r\n")],
+          { type: "text/csv;charset=utf-8" },
+        ),
+        "relatorio-os-" + D.R.s + ".csv",
+      );
+      say("CSV gerado.");
+    } catch (e) {
+      say("Erro ao gerar o CSV: " + ((e && e.message) || e), true);
+    }
+  });
+  $("#or_pdf").addEventListener("click", async () => {
+    try {
+      const D = osRepData(),
+        doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
+      let y = 36;
+      try {
+        doc.addImage(LOGO, "PNG", 14, 10, 16, 16);
+      } catch (e) {}
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.text("AXION | SISTEMAS EMBARCADOS E ENERGIA", 34, 16);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(
+        "Relatório de ordens de serviço · " +
+          D.R.t +
+          " · gerado em " +
+          new Date().toLocaleDateString("pt-BR"),
+        34,
+        22,
+      );
+      const nl = (h) => {
+        if (y + h > 284) {
+          doc.addPage();
+          y = 20;
+        }
+      };
+      const head = (s) => {
+        nl(12);
+        y += 4;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.text(s.toUpperCase(), 14, y);
+        y += 2;
+        doc.line(14, y, 196, y);
+        y += 5;
+        doc.setFont("helvetica", "normal");
+      };
+      const row = (a, b, c) => {
+        nl(6);
+        doc.setFontSize(9);
+        doc.text(String(a).slice(0, 60), 14, y);
+        if (c) doc.text(String(c), 140, y);
+        doc.text(String(b), 196, y, { align: "right" });
+        y += 5.5;
+      };
+      head("Resumo");
+      row("Ordens no período", String(D.lista.length));
+      row("Peças / produtos", brl(D.T.prod));
+      row(
+        "Mão de obra" + (D.T.horas ? " (" + fmtHoras(D.T.horas) + ")" : ""),
+        brl(D.T.serv),
+      );
+      if (D.T.desc) row("Descontos", "- " + brl(D.T.desc));
+      row("Total", brl(D.T.total));
+      row(
+        "Abertas / A receber / Pagas",
+        brl(D.st.aberta) + " / " + brl(D.st.concluida) + " / " + brl(D.st.paga),
+      );
+      head("Por cliente");
+      D.cli.forEach((c) => row(c.nome + " (" + c.q + ")", brl(c.v)));
+      head("Ordens do período");
+      D.lista.forEach((o) =>
+        row(
+          "OS " + osNum(o) + " · " + o.cliente,
+          brl(osTotals(o).total),
+          dataBR(o.data) + " · " + OS_SIT[o.status || "aberta"],
+        ),
+      );
+      await saveBlob(doc.output("blob"), "relatorio-os-" + D.R.s + ".pdf");
+      say("PDF do relatório gerado.");
+    } catch (e) {
+      say("Erro ao gerar o PDF: " + ((e && e.message) || e), true);
+    }
   });
 
   /* ---------- Inicialização ---------- */

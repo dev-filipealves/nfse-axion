@@ -28,18 +28,24 @@ Funciona direto no navegador do celular ou do computador, sem servidor próprio 
 ## ✨ O que a ferramenta faz
 
 ### 🏠 Tela inicial
-- Painel com quadrados: **Lançar nota**, **Minhas notas**, **Finanças**, **Relatórios**, **Ordem de serviço** e **Configurações**.
-- Cada área mostra no topo **só as ferramentas de ação dela**: Minhas notas (enviar nota, baixar PDF, compartilhar e lançar) e Finanças (entrada, despesa, repetir recorrentes e dízimo). Em Finanças e Relatórios, os botões de exportação (WhatsApp, PDF, tabela e CSV) ficam **no fim da tela**.
-- Cartão **Visão geral** com o faturamento do mês, o valor a receber e a porcentagem do limite anual do MEI. Tocar nele abre os **Relatórios**.
-- O botão **← Voltar** de qualquer tela leva de volta ao painel.
+- Painel com quatro ferramentas: **Nota Fiscal**, **Ordem de serviço**, **Finanças** e **Configurações**.
+- Cada ferramenta abre os **quadrados das suas subferramentas**:
+  - **Nota Fiscal:** Enviar nota, Minhas notas e Relatórios.
+  - **Ordem de serviço:** Nova OS, Minhas OS, Cadastro de serviços e Relatórios.
+  - **Finanças:** Meus perfis financeiros, com o botão para criar perfis.
+- Cada tela mostra no topo **só as ações dela**. Os botões de exportação (WhatsApp, PDF, tabela e CSV) ficam **no fim da tela**.
+- Cartão **Visão geral** com o faturamento do mês, o valor a receber e a porcentagem do limite anual do MEI. Tocar nele abre os relatórios das notas.
+- O botão **← Voltar** sobe um nível: da subferramenta para a ferramenta, e dela para o início.
 
 ### 🛠 Ordem de serviço
 - Cadastro de **cliente, contato, veículo, placa, data e número** (sequencial automático).
 - **Produtos/peças** com quantidade e valor unitário.
 - **Serviços por hora** (horas × valor/hora, aceita "1,5" ou "1h30") ou por **valor fixo**.
 - Desconto, forma de pagamento, observações e **total calculado na hora**.
-- Situação **Aberta → Concluída → Paga**, documento no layout AXION, **PDF**, **compartilhar** e **lançar no financeiro** (PJ ou PF).
-- Dados salvos no arquivo **`ordens.json`**, no mesmo repositório privado.
+- Situação **Aberta → Concluída → Paga**, documento no layout AXION, **PDF**, **compartilhar** e **lançar no financeiro** (no perfil escolhido).
+- 📋 **Cadastro de serviços:** nome, cobrança (por hora ou valor fixo) e preço. Na OS, o botão **Do cadastro** adiciona o serviço já com o preço, e o nome também é sugerido ao digitar. Continua sendo possível digitar qualquer serviço direto na OS.
+- 📊 **Relatórios de OS:** por período, com peças, mão de obra, horas, totais por situação e por cliente, exportação em CSV e PDF.
+- Dados salvos nos arquivos **`ordens.json`** e **`servicos.json`**, no mesmo repositório privado.
 
 ### 🖥️ Computador e 📱 celular
 - No computador: **menu lateral**, barra superior com busca, quadrados maiores e painel com **faturamento mês a mês, últimas notas, ações necessárias e principais categorias**.
@@ -80,15 +86,16 @@ Funciona direto no navegador do celular ou do computador, sem servidor próprio 
 - 👥 **Resumo por cliente**, com quantidade de notas, valor e porcentagem do total.
 - 📤 Exportação em **CSV** (abre no Excel, separador ponto e vírgula) e em **PDF**.
 
-### 💰 Financeiro (PJ e PF)
-- 🏢👤 Duas contas separadas: **PJ (empresa)** e **PF (pessoal)**.
+### 💰 Finanças (perfis)
+- 👤 **Perfis financeiros:** cada perfil (ex.: Filipe, Ari, Empresa) tem suas próprias entradas e despesas. Crie, renomeie ou exclua perfis na tela **Meus perfis**. Cada cartão mostra o resumo do mês.
+- 🔄 Na primeira abertura, o antigo PF vira o perfil **Filipe**, com todos os lançamentos. O antigo PJ só vira perfil se tiver lançamentos, para nada se perder; ele pode ser excluído depois.
 - 📅 Tudo organizado **por mês**: cada entrada ou despesa vai para o mês da sua data e os totais (entradas, despesas e saldo) são recalculados na hora. O seletor de mês marca o **mês atual** e tem atalho para voltar a ele.
 - ✏️ Cadastro, **edição e exclusão** de nome, valor, data e categoria de cada item.
 - ✅ Situação de cada item: **pago / a pagar** (despesas) e **recebido / a receber** (entradas), com o total pendente.
-- 🧾 **Lançar notas no financeiro:** botão **💸 Lançar** em cada nota (na lista e na tela da nota). Um menu pergunta o destino (**PJ ou PF**) e se entra como **entrada** ou **despesa**. O lançamento é manual, e a mesma nota não é lançada duas vezes no mesmo destino.
-- 👤 **Replicar receita do PJ na PF:** ao lançar uma entrada no PJ, a ferramenta oferece copiá-la também para a pessoa física.
+- 🧾 **Lançar notas no financeiro:** botão **💸 Lançar** em cada nota (na lista e na tela da nota). Um menu lista os **perfis** e pergunta se entra como **entrada** ou **despesa**. O lançamento é manual, e a mesma nota não é lançada duas vezes no mesmo destino.
+- 👤 **Replicar receita em outro perfil:** ao lançar uma entrada, a ferramenta oferece copiá-la para outro perfil (quando há mais de um).
 - 🔁 **Itens recorrentes** e botão para repetir no mês seguinte os recorrentes do mês anterior (como "a pagar").
-- 💡 **Dízimo 10%:** calcula 10% das entradas do mês na conta aberta (PJ ou PF).
+- 💡 **Dízimo 10%:** calcula 10% das entradas do mês no perfil aberto.
 - 🗂 **Despesas por categoria**, com porcentagem do total.
 - 📤 **Resumo para WhatsApp** (editável antes de enviar, com opção de copiar o texto): cada lançamento aparece com ✅ quando está pago/recebido e ❌ quando está pendente.
 - ⬇️ Exportação do mês em **PDF** (cada lançamento mostra PAGO ou A PAGAR, RECEBIDO ou A RECEBER) e em **tabela (CSV, abre no Excel)**.
@@ -171,7 +178,7 @@ A ferramenta foi pensada para que dados de clientes e credenciais **não fiquem 
    - uma senha e a confirmação.
 5. Toque em **Salvar e testar**. Quando aparecer a confirmação de conexão, as próximas notas já serão guardadas no repositório.
 
-Os arquivos `notas.json`, `financeiro.json` e `ordens.json` e a pasta `pdfs/` são criados automaticamente.
+Os arquivos `notas.json`, `financeiro.json`, `perfis.json`, `ordens.json` e `servicos.json` e a pasta `pdfs/` são criados automaticamente.
 
 ---
 
