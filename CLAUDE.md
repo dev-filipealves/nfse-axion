@@ -17,3 +17,4 @@
 ## Ao publicar
 - Troque o número da publicação (ex.: `2026-11-08.1`) em `index.html` (todos os `?v=`), `js/base/config.js` e `js/app/versao.js`.
 - Formate com Prettier (configuração padrão) antes do commit.
+- Rode os testes (`cd testes && npm test`) e só publique com todos aprovados; funções novas ganham teste em `testes/`.

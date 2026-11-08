@@ -1,0 +1,27 @@
+# Roda os testes automáticos (funcional, segurança, estabilidade e desempenho) a cada envio.
+# O resultado aparece na aba "Actions" do GitHub (✅ ou ❌ ao lado de cada commit).
+name: Testes
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: testes
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: npm test

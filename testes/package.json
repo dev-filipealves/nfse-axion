@@ -1,0 +1,15 @@
+{
+  "name": "axion-testes",
+  "private": true,
+  "description": "Testes automáticos do AXION: funcional, segurança, estabilidade e desempenho",
+  "scripts": {
+    "test": "node rodar.js"
+  },
+  "devDependencies": {
+    "html2canvas": "1.4.1",
+    "jspdf": "2.5.1",
+    "pdfjs-dist": "3.11.174",
+    "playwright": "1.63.0",
+    "qrcode-generator": "1.4.4"
+  }
+}
