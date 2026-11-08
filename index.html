@@ -17,14 +17,14 @@
     />
     <meta name="referrer" content="no-referrer" />
     <!-- Estilos: do geral (base) ao específico; responsivo.css por último -->
-    <link rel="stylesheet" href="css/base.css?v=2026-11-08.1" />
-    <link rel="stylesheet" href="css/componentes.css?v=2026-11-08.1" />
-    <link rel="stylesheet" href="css/layout.css?v=2026-11-08.1" />
-    <link rel="stylesheet" href="css/painel.css?v=2026-11-08.1" />
-    <link rel="stylesheet" href="css/nota.css?v=2026-11-08.1" />
-    <link rel="stylesheet" href="css/financas.css?v=2026-11-08.1" />
-    <link rel="stylesheet" href="css/os.css?v=2026-11-08.1" />
-    <link rel="stylesheet" href="css/responsivo.css?v=2026-11-08.1" />
+    <link rel="stylesheet" href="css/base.css?v=2026-11-08.2" />
+    <link rel="stylesheet" href="css/componentes.css?v=2026-11-08.2" />
+    <link rel="stylesheet" href="css/layout.css?v=2026-11-08.2" />
+    <link rel="stylesheet" href="css/painel.css?v=2026-11-08.2" />
+    <link rel="stylesheet" href="css/nota.css?v=2026-11-08.2" />
+    <link rel="stylesheet" href="css/financas.css?v=2026-11-08.2" />
+    <link rel="stylesheet" href="css/os.css?v=2026-11-08.2" />
+    <link rel="stylesheet" href="css/responsivo.css?v=2026-11-08.2" />
   </head>
   <body>
     <div class="shell">
@@ -280,6 +280,7 @@
             <button class="btn sec" id="os_pdf">⬇️ Baixar PDF</button>
             <button class="btn sec" id="os_share">📤 Compartilhar</button>
             <button class="btn sec" id="os_launch">💸 Lançar</button>
+            <button class="btn sec" id="os_pix">💠 Copiar Pix</button>
           </div>
         </div>
         <div id="msg"></div>
@@ -763,7 +764,13 @@
             </div>
             <div>
               <label for="os_placa">Placa</label
-              ><input id="os_placa" type="text" autocomplete="off" />
+              ><input
+                id="os_placa"
+                type="text"
+                autocomplete="off"
+                autocapitalize="characters"
+                placeholder="ABC1D23"
+              />
             </div>
             <div>
               <label for="os_data">Data</label
@@ -786,7 +793,17 @@
                 <option value="paga">Paga</option>
               </select>
             </div>
+            <div>
+              <label for="os_gar">Garantia do serviço</label>
+              <select id="os_gar"></select>
+            </div>
           </div>
+          <details class="osck" id="os_ck">
+            <summary>📋 Checklist de entrada do veículo (opcional)</summary>
+            <div id="os_ckitens" class="ckgrid"></div>
+            <label for="os_ckobs">Observações da entrada</label>
+            <textarea id="os_ckobs" rows="2"></textarea>
+          </details>
           <div class="sect">Produtos / peças</div>
           <div id="os_prods"></div>
           <button class="btn sec" id="os_addp" type="button">
@@ -961,7 +978,7 @@
       <div id="lastSync" class="app-footer-sync">☁ Somente neste aparelho</div>
     </footer>
 
-    <script src="js/app/versao.js?v=2026-11-08.1"></script>
+    <script src="js/app/versao.js?v=2026-11-08.2"></script>
 
     <!-- Bibliotecas externas: versão fixa + SRI (o navegador bloqueia o arquivo se ele for alterado) -->
     <script
@@ -991,36 +1008,37 @@
     ></script>
     <!-- Código da aplicação: carregado nesta ordem (cada arquivo usa os anteriores) -->
     <!-- Base: configuração, utilitários e interface comum -->
-    <script src="js/base/logo.js?v=2026-11-08.1"></script>
-    <script src="js/base/config.js?v=2026-11-08.1"></script>
-    <script src="js/base/utils.js?v=2026-11-08.1"></script>
-    <script src="js/base/ui.js?v=2026-11-08.1"></script>
+    <script src="js/base/logo.js?v=2026-11-08.2"></script>
+    <script src="js/base/config.js?v=2026-11-08.2"></script>
+    <script src="js/base/utils.js?v=2026-11-08.2"></script>
+    <script src="js/base/ui.js?v=2026-11-08.2"></script>
+    <script src="js/base/pix.js?v=2026-11-08.2"></script>
     <!-- Dados: segurança e GitHub -->
-    <script src="js/dados/seguranca.js?v=2026-11-08.1"></script>
-    <script src="js/dados/github.js?v=2026-11-08.1"></script>
+    <script src="js/dados/seguranca.js?v=2026-11-08.2"></script>
+    <script src="js/dados/github.js?v=2026-11-08.2"></script>
     <!-- Nota Fiscal -->
-    <script src="js/notas/banco.js?v=2026-11-08.1"></script>
-    <script src="js/notas/leitor.js?v=2026-11-08.1"></script>
-    <script src="js/notas/documento.js?v=2026-11-08.1"></script>
-    <script src="js/notas/lista.js?v=2026-11-08.1"></script>
-    <script src="js/notas/relatorios.js?v=2026-11-08.1"></script>
+    <script src="js/notas/banco.js?v=2026-11-08.2"></script>
+    <script src="js/notas/leitor.js?v=2026-11-08.2"></script>
+    <script src="js/notas/documento.js?v=2026-11-08.2"></script>
+    <script src="js/notas/lista.js?v=2026-11-08.2"></script>
+    <script src="js/notas/relatorios.js?v=2026-11-08.2"></script>
     <!-- Finanças -->
-    <script src="js/financas/banco.js?v=2026-11-08.1"></script>
-    <script src="js/financas/perfis.js?v=2026-11-08.1"></script>
-    <script src="js/financas/tela.js?v=2026-11-08.1"></script>
-    <script src="js/financas/exportar.js?v=2026-11-08.1"></script>
-    <script src="js/financas/lancar.js?v=2026-11-08.1"></script>
+    <script src="js/financas/banco.js?v=2026-11-08.2"></script>
+    <script src="js/financas/perfis.js?v=2026-11-08.2"></script>
+    <script src="js/financas/tela.js?v=2026-11-08.2"></script>
+    <script src="js/financas/exportar.js?v=2026-11-08.2"></script>
+    <script src="js/financas/lancar.js?v=2026-11-08.2"></script>
     <!-- Ordem de serviço -->
-    <script src="js/os/banco.js?v=2026-11-08.1"></script>
-    <script src="js/os/cadastro.js?v=2026-11-08.1"></script>
-    <script src="js/os/lista.js?v=2026-11-08.1"></script>
-    <script src="js/os/editor.js?v=2026-11-08.1"></script>
-    <script src="js/os/documento.js?v=2026-11-08.1"></script>
-    <script src="js/os/relatorios.js?v=2026-11-08.1"></script>
+    <script src="js/os/banco.js?v=2026-11-08.2"></script>
+    <script src="js/os/cadastro.js?v=2026-11-08.2"></script>
+    <script src="js/os/lista.js?v=2026-11-08.2"></script>
+    <script src="js/os/editor.js?v=2026-11-08.2"></script>
+    <script src="js/os/documento.js?v=2026-11-08.2"></script>
+    <script src="js/os/relatorios.js?v=2026-11-08.2"></script>
     <!-- Aplicação: painel, configurações, navegação e inicialização -->
-    <script src="js/app/painel.js?v=2026-11-08.1"></script>
-    <script src="js/app/configuracoes.js?v=2026-11-08.1"></script>
-    <script src="js/app/navegacao.js?v=2026-11-08.1"></script>
-    <script src="js/app/main.js?v=2026-11-08.1"></script>
+    <script src="js/app/painel.js?v=2026-11-08.2"></script>
+    <script src="js/app/configuracoes.js?v=2026-11-08.2"></script>
+    <script src="js/app/navegacao.js?v=2026-11-08.2"></script>
+    <script src="js/app/main.js?v=2026-11-08.2"></script>
   </body>
 </html>

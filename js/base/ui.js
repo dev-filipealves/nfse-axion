@@ -46,7 +46,7 @@ function askText(o) {
           '<button class="btn' +
           (x.sec ? " sec" : "") +
           '" data-a="' +
-          x.id +
+          esc(x.id) +
           '" style="width:100%">' +
           x.rotulo +
           "</button>",

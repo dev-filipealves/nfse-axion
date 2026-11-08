@@ -14,7 +14,8 @@ try {
 } catch (e) {
   os = [];
 }
-if (!Array.isArray(os) || isProt()) {
+os = soItens(os).map(osNormal);
+if (isProt()) {
   os = [];
   try {
     localStorage.removeItem(LS_OS);
@@ -33,6 +34,64 @@ function osProximo() {
 /** Total de um serviço: horas × valor/hora, ou valor fixo. */
 function osServTotal(s) {
   return s.modo === "fixo" ? r2(s.valor) : r2(s.horas * s.vh);
+}
+/** Completa uma ordem lida do aparelho ou do GitHub (listas e checklist sempre no formato certo). */
+function osNormal(o) {
+  const lista = (v) =>
+    Array.isArray(v) ? v.filter((x) => x && typeof x === "object") : [];
+  o.prods = lista(o.prods);
+  o.servs = lista(o.servs);
+  if (!OS_SIT[o.status]) o.status = "aberta";
+  if (o.checklist && (typeof o.checklist !== "object" || !o.checklist.itens))
+    o.checklist = { itens: {}, obs: "" };
+  return o;
+}
+/** Início da garantia: data da conclusão (ou a data da OS, para ordens antigas); null se aberta. */
+function osGarantiaInicio(o) {
+  if ((o.status || "aberta") === "aberta") return null;
+  return o.concluidaEm || o.data || null;
+}
+/**
+ * Situação da garantia: { dias, fim, valida, falta } ou null quando a OS não tem garantia.
+ * fim = início + dias (AAAA-MM-DD); valida = hoje ainda está dentro do prazo.
+ */
+function osGarantia(o) {
+  const dias = parseInt(o.garantia, 10) || 0;
+  if (!dias) return null;
+  const ini = osGarantiaInicio(o);
+  if (!ini) return { dias: dias, fim: null, valida: null, falta: null };
+  const p = ini.split("-").map(Number),
+    fim = new Date(p[0], p[1] - 1, p[2] + dias),
+    hoje = new Date(new Date().toDateString());
+  const iso =
+    fim.getFullYear() +
+    "-" +
+    pad2(fim.getMonth() + 1) +
+    "-" +
+    pad2(fim.getDate());
+  return {
+    dias: dias,
+    fim: iso,
+    valida: hoje <= fim,
+    falta: Math.round((fim - hoje) / 86400000),
+  };
+}
+/** Garantia em texto curto: "90 dias · até 05/02/2027". */
+function osGarantiaTexto(o) {
+  const g = osGarantia(o);
+  if (!g) return "Sem garantia";
+  return (
+    g.dias +
+    " dias · " +
+    (g.fim ? "até " + dataBR(g.fim) : "conta a partir da conclusão")
+  );
+}
+/** Registra a data de conclusão quando a OS sai de "aberta" (e limpa se voltar a "aberta"). */
+function osMarcarConclusao(o, statusAnterior) {
+  if ((o.status || "aberta") === "aberta") o.concluidaEm = "";
+  else if (!o.concluidaEm)
+    o.concluidaEm =
+      (statusAnterior || "aberta") === "aberta" ? hojeISO() : o.data;
 }
 /** Totais da ordem: produtos, serviços, horas, desconto e total geral. */
 function osTotals(o) {
@@ -89,7 +148,7 @@ async function osLoad() {
       );
     }
   }
-  os = Array.isArray(arr) ? arr : [];
+  os = soItens(arr).map(osNormal);
   return true;
 }
 /** Envia as ordens para o GitHub. */

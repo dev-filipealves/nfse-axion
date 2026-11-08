@@ -19,10 +19,12 @@ const normRot = (s) =>
   String(s || "")
     .trim()
     .toLocaleLowerCase("pt-BR");
-// limite anual do MEI (confirmado para 2026); altere aqui se a lei mudar
-/** Formata número como moeda brasileira. */
+/** Formata número como moeda brasileira (valor inválido vira R$ 0,00). */
 function brl(n) {
-  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return (Number(n) || 0).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
 }
 /** Converte "R$ 1.466,67" em número. */
 function toNum(s) {
@@ -94,6 +96,22 @@ const inicial = (s) =>
     .toUpperCase() || "?";
 /** Arredonda para 2 casas decimais (centavos). */
 const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+/**
+ * Mantém só os itens válidos de uma lista (objetos com id): protege as telas contra dados
+ * corrompidos no aparelho ou no GitHub. ok(item) é uma conferência extra opcional.
+ */
+function soItens(arr, ok) {
+  return Array.isArray(arr)
+    ? arr.filter(
+        (x) =>
+          x &&
+          typeof x === "object" &&
+          !Array.isArray(x) &&
+          x.id != null &&
+          (!ok || ok(x)),
+      )
+    : [];
+}
 /** Lê horas digitadas: "1,5", "2" ou "1h30". */
 function parseHoras(s) {
   s = String(s || "")

@@ -7,6 +7,27 @@
  */
 "use strict";
 
+/** Etiqueta da garantia na lista: em garantia (verde), vencida (vermelho) ou a começar. */
+function garantiaBadge(o) {
+  const g = osGarantia(o);
+  if (!g) return "";
+  if (!g.fim)
+    return (
+      '<span class="badge off">🛡 Garantia de ' +
+      g.dias +
+      " dias (após concluir)</span>"
+    );
+  return g.valida
+    ? '<span class="badge ok">🛡 Em garantia até ' +
+        dataBR(g.fim) +
+        " (" +
+        g.falta +
+        (g.falta === 1 ? " dia)" : " dias)") +
+        "</span>"
+    : '<span class="badge late">⛔ Fora da garantia desde ' +
+        dataBR(g.fim) +
+        "</span>";
+}
 /** Desenha a lista de ordens de serviço, com busca e resumo. */
 function renderOsList() {
   const box = $("#os_items");
@@ -65,7 +86,12 @@ function renderOsList() {
             esc(o.cliente) +
             '</div><div class="sb">' +
             esc(
-              [o.veiculo, dataBR(o.data), brl(T.total)]
+              [
+                o.veiculo,
+                o.placa ? String(o.placa).toUpperCase() : "",
+                dataBR(o.data),
+                brl(T.total),
+              ]
                 .filter(Boolean)
                 .join(" · "),
             ) +
@@ -77,6 +103,7 @@ function renderOsList() {
             '">' +
             OS_STATUS_TXT[o.status || "aberta"] +
             "</button>" +
+            garantiaBadge(o) +
             '<button class="badge" data-osedit="' +
             id +
             '">✏️ Editar</button></div></div>' +
@@ -135,7 +162,10 @@ $("#os_items").addEventListener("click", async (ev) => {
     await osSync(
       (arr) => {
         const x = arr.find((y) => y.id === id);
-        if (x) x.status = ordem[(ordem.indexOf(x.status || "aberta") + 1) % 3];
+        if (!x) return;
+        const antes = x.status || "aberta";
+        x.status = ordem[(ordem.indexOf(antes) + 1) % 3];
+        osMarcarConclusao(x, antes);
       },
       "Situação atualizada",
       "OS situação " + id,

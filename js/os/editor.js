@@ -104,8 +104,11 @@ function osEditor(o) {
         desconto: 0,
         pagamento: "A definir",
         obs: "",
+        garantia: GARANTIA_PADRAO,
+        checklist: { itens: {}, obs: "" },
         criadoEm: Date.now(),
       };
+  if (!osDraft.checklist) osDraft.checklist = { itens: {}, obs: "" };
   hideAll();
   $("#oseditor").hidden = false;
   $("#os_title").textContent = o
@@ -125,10 +128,47 @@ function osEditor(o) {
   $("#os_desc").value = fmtNum(v.desconto);
   $("#os_pag").value = v.pagamento || "A definir";
   $("#os_obs").value = v.obs || "";
+  $("#os_gar").innerHTML = GARANTIA_OPCOES.map(
+    (d) =>
+      '<option value="' +
+      d +
+      '">' +
+      (d ? d + " dias" : "Sem garantia") +
+      "</option>",
+  ).join("");
+  $("#os_gar").value = String(parseInt(v.garantia, 10) || 0);
+  renderChecklist();
   $("#os_err").textContent = "";
   osLinhas();
   osAtualizarTotais();
   window.scrollTo({ top: 0 });
+}
+/** Desenha o checklist de entrada (itens do config.js + itens antigos já marcados). */
+function renderChecklist() {
+  const ck = osDraft.checklist,
+    nomes = CHECKLIST_ENTRADA.concat(
+      Object.keys(ck.itens).filter((n) => CHECKLIST_ENTRADA.indexOf(n) < 0),
+    );
+  $("#os_ckitens").innerHTML = nomes
+    .map((n) => {
+      const v = ck.itens[n] || "";
+      return (
+        '<label class="ckrow"><span>' +
+        esc(n) +
+        '</span><select data-ck="' +
+        esc(n) +
+        '"><option value=""' +
+        (v ? "" : " selected") +
+        '>Não verificado</option><option value="ok"' +
+        (v === "ok" ? " selected" : "") +
+        '>✓ OK</option><option value="defeito"' +
+        (v === "defeito" ? " selected" : "") +
+        ">✗ Com defeito</option></select></label>"
+      );
+    })
+    .join("");
+  $("#os_ckobs").value = ck.obs || "";
+  $("#os_ck").open = Object.keys(ck.itens).length > 0 || !!ck.obs;
 }
 /** Valida e salva a ordem do editor. */
 async function osSalvar() {
@@ -154,6 +194,11 @@ async function osSalvar() {
     );
   const rec = JSON.parse(JSON.stringify(d));
   rec.numero = num;
+  rec.placa = String(rec.placa || "")
+    .toUpperCase()
+    .trim();
+  const antes = os.find((o) => o.id === rec.id);
+  osMarcarConclusao(rec, antes ? antes.status : "aberta");
   await osSync(
     (arr) => {
       const i = arr.findIndex((x) => x.id === rec.id);
@@ -231,6 +276,12 @@ $("#oseditor").addEventListener("input", (ev) => {
     };
     if (map[t.id]) osDraft[map[t.id]] = t.value;
     else if (t.id === "os_desc") osDraft.desconto = parseValor(t.value) || 0;
+    else if (t.id === "os_gar") osDraft.garantia = parseInt(t.value, 10) || 0;
+    else if (t.id === "os_ckobs") osDraft.checklist.obs = t.value;
+    else if (t.dataset.ck) {
+      if (t.value) osDraft.checklist.itens[t.dataset.ck] = t.value;
+      else delete osDraft.checklist.itens[t.dataset.ck];
+    }
   }
   osAtualizarTotais();
 });
@@ -260,7 +311,9 @@ $("#os_addcat").addEventListener("click", async () => {
   }
   const lista = catalogo.dados
     .slice()
-    .sort((x, y) => x.nome.localeCompare(y.nome, "pt-BR"));
+    .sort((x, y) =>
+      String(x.nome || "").localeCompare(String(y.nome || ""), "pt-BR"),
+    );
   const r = await askText({
     titulo: "📋 Escolha o serviço",
     semTexto: true,

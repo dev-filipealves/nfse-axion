@@ -43,6 +43,9 @@ Funciona direto no navegador do celular ou do computador, sem servidor próprio 
 - **Serviços por hora** (horas × valor/hora, aceita "1,5" ou "1h30") ou por **valor fixo**.
 - Desconto, forma de pagamento, observações e **total calculado na hora**.
 - Situação **Aberta → Concluída → Paga**, documento no layout AXION, **PDF**, **compartilhar** e **lançar no financeiro** (no perfil escolhido).
+- 💠 **Pix:** enquanto a OS não está paga, o documento traz o **QR Code Pix com o valor** e o **copia e cola** (chave: CNPJ). O botão **Copiar Pix** copia o código e o compartilhar já o inclui. A cobrança das notas também traz o Pix com o valor da nota.
+- 🛡 **Garantia:** 30, 90, 180 ou 365 dias (ou sem garantia), contada a partir do dia em que a OS é **concluída**. Em Minhas OS cada ordem mostra **“Em garantia até…”** ou **“Fora da garantia desde…”**; dá para buscar pela placa.
+- 📋 **Checklist de entrada:** situação de cada item do veículo na chegada (OK / com defeito) e observações; sai no documento da OS. Os itens ficam em `js/base/config.js`.
 - 📋 **Cadastro de serviços:** nome, cobrança (por hora ou valor fixo) e preço. Na OS, o botão **Do cadastro** adiciona o serviço já com o preço, e o nome também é sugerido ao digitar. Continua sendo possível digitar qualquer serviço direto na OS.
 - 📊 **Relatórios de OS:** por período, com peças, mão de obra, horas, totais por situação e por cliente, exportação em CSV e PDF.
 - Dados salvos nos arquivos **`ordens.json`** e **`servicos.json`**, no mesmo repositório privado.
@@ -202,7 +205,8 @@ Site estático, **sem etapa de compilação**: HTML, CSS e JavaScript puros, pub
     │   ├── logo.js         # logo da AXION (imagem embutida)
     │   ├── config.js       # ⚙️ TODOS os valores fixos: empresa, limite do MEI, categorias, arquivos
     │   ├── utils.js        # formatação e conversão (moeda, datas, horas, telefone, CSV)
-    │   └── ui.js           # mensagens, janela de opções, download e links
+    │   ├── ui.js           # mensagens, janela de opções, download e links
+    │   └── pix.js          # Pix copia e cola (BR Code), QR Code e copiar texto
     ├── dados/
     │   ├── seguranca.js    # armazenamento local, configuração e senha (criptografia do token)
     │   └── github.js       # API do GitHub, indicador de sincronização e banco genérico
@@ -231,6 +235,8 @@ Site estático, **sem etapa de compilação**: HTML, CSS e JavaScript puros, pub
         ├── configuracoes.js # tela de configuração do GitHub
         ├── navegacao.js    # troca de telas, quadrados, menu lateral e botão Voltar
         └── main.js         # inicialização (último arquivo)
+testes/                     # 🧪 testes automáticos (veja testes/README.md)
+.github/workflows/testes.yml # roda os testes no GitHub a cada envio
 ```
 
 ### 🧭 Onde mexer
@@ -238,6 +244,8 @@ Site estático, **sem etapa de compilação**: HTML, CSS e JavaScript puros, pub
 | Quero mudar… | Arquivo |
 | --- | --- |
 | Nome da empresa, CNPJ, cabeçalho da OS, limite do MEI, categorias, formas de pagamento | `js/base/config.js` |
+| Chave Pix, prazos de garantia, itens do checklist de entrada | `js/base/config.js` (`PIX`, `GARANTIA_OPCOES`, `CHECKLIST_ENTRADA`) |
+| Regras da garantia (início, vencimento) | `js/os/banco.js` |
 | Cores e tema | `css/base.css` (variáveis em `:root`) |
 | Visual de botões, painéis, campos | `css/componentes.css` |
 | Leitura do PDF da nota (campos, novo modelo) | `js/notas/leitor.js` |
@@ -254,6 +262,7 @@ Site estático, **sem etapa de compilação**: HTML, CSS e JavaScript puros, pub
 - **Cabeçalho em cada arquivo:** diz o que ele faz e de quais arquivos depende. Cada função tem um comentário de uma linha.
 - **Uma publicação = um número:** o número (ex.: `2026-11-08.1`) aparece no `index.html` (`?v=` de cada arquivo, para o navegador baixar a versão nova), em `js/base/config.js` e em `js/app/versao.js`. Ao publicar, troque nos três.
 - **Formatação:** [Prettier](https://prettier.io/) com a configuração padrão.
+- **Testes:** `testes/` (funcional, segurança, estabilidade e desempenho). Rodam sozinhos no GitHub (aba **Actions**) a cada envio; no computador: `cd testes && npm install && npx playwright install chromium && npm test`.
 - **Segurança:** a Content Security Policy do `index.html` só permite scripts do próprio site e do jsDelivr; por isso não há código dentro do HTML.
 
 ---

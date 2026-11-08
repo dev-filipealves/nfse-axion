@@ -12,7 +12,7 @@
 /* ---------------------------------------------------------------- Publicação */
 
 /** Identificação desta publicação: o js/app/versao.js confere se todos os arquivos são da mesma versão. */
-window.AXION_BUILD = "2026-11-08.1";
+window.AXION_BUILD = "2026-11-08.2";
 
 /** Mostra na tela qualquer erro inesperado (ajuda a diagnosticar no celular). */
 window.addEventListener("error", function (e) {
@@ -108,6 +108,32 @@ const OS_STATUS_TXT = {
   paga: "✅ Paga",
 };
 const OS_SIT = { aberta: "Aberta", concluida: "Concluída", paga: "Paga" };
+
+/** Pix: chave (CNPJ, só números), nome e cidade do recebedor que aparecem no QR Code. */
+const PIX = {
+  chave: "66730393000105",
+  nome: "FILIPE LOPES ALVES",
+  cidade: "NOVO HAMBURGO",
+};
+
+/** Garantia da OS: opções em dias (0 = sem garantia) e o padrão de uma OS nova. */
+const GARANTIA_OPCOES = [0, 30, 90, 180, 365];
+const GARANTIA_PADRAO = 90;
+
+/** Itens do checklist de entrada do veículo (OS). */
+const CHECKLIST_ENTRADA = [
+  "Bateria",
+  "Painel e instrumentos",
+  "Luzes externas (faróis, lanternas e setas)",
+  "Iluminação interna",
+  "Tomadas 12 V / 220 V",
+  "Inversor / carregador",
+  "Painel solar",
+  "Bomba d'água",
+  "Geladeira",
+  "Ar-condicionado",
+  "Lataria e vidros (avarias visíveis)",
+];
 
 /** Formas de pagamento oferecidas na ordem de serviço. */
 const OS_PAGAMENTOS = [

@@ -27,10 +27,7 @@ function render(d) {
   const qrData =
     "https://www.nfse.gov.br/ConsultaPublica/" +
     (chv.length >= 40 ? "?tpc=1&chave=" + chv : "");
-  const qr = qrcode(0, "M");
-  qr.addData(qrData);
-  qr.make();
-  const qrSvg = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+  const qrTag = qrSvg(qrData);
   const money = (v) => (v && v !== "-" ? v : "R$ 0,00");
   const info = d.info && d.info !== "-" ? d.info : "-";
   $("#paper").innerHTML = `
@@ -50,7 +47,7 @@ function render(d) {
         <div class="f span3"><label>Chave de acesso</label><div class="key">${esc(d.chave)}</div></div>
       </div>
     </div>
-    <div class="qr">${qrSvg}<span>Validar NFS-e nº ${esc(d.numero)}<br>nfse.gov.br</span></div>
+    <div class="qr">${qrTag}<span>Validar NFS-e nº ${esc(d.numero)}<br>nfse.gov.br</span></div>
   </div>
 
   <div class="sec"><h3>Prestador do serviço</h3>

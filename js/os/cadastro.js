@@ -40,7 +40,9 @@ function renderCat() {
   const q = (($("#cat_q") && $("#cat_q").value) || "").toLowerCase().trim();
   const arr = catalogo.dados
     .filter((s) => !q || s.nome.toLowerCase().includes(q))
-    .sort((x, y) => x.nome.localeCompare(y.nome, "pt-BR"));
+    .sort((x, y) =>
+      String(x.nome || "").localeCompare(String(y.nome || ""), "pt-BR"),
+    );
   box.innerHTML = arr.length
     ? arr
         .map(

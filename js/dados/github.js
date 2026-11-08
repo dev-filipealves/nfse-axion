@@ -43,10 +43,7 @@ function fmtDataHora(ts) {
 function updateSyncLabel(falhou) {
   const el = document.getElementById("lastSync");
   if (!el) return;
-  let conf = {};
-  try {
-    conf = JSON.parse(lsGet(LS_CFG) || "{}");
-  } catch (e) {}
+  const conf = lerCfg();
   const ult = parseInt(lsGet(LS_LASTSYNC) || "0", 10);
   el.classList.toggle("warn", !!falhou);
   if (!conf.repo) {
@@ -76,7 +73,8 @@ function criarBanco(path, lsKey, aoMudar) {
   } catch (e) {
     b.dados = [];
   }
-  if (!Array.isArray(b.dados) || isProt()) {
+  b.dados = soItens(b.dados);
+  if (isProt()) {
     b.dados = [];
     try {
       localStorage.removeItem(lsKey);
@@ -123,7 +121,7 @@ function criarBanco(path, lsKey, aoMudar) {
         );
       }
     }
-    b.dados = Array.isArray(arr) ? arr : [];
+    b.dados = soItens(arr);
     b.carregado = true;
     return true;
   };

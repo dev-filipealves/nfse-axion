@@ -9,6 +9,16 @@
 "use strict";
 
 /** Nota aberta na tela (dados lidos do PDF ou do banco). */
+/** Uma nota precisa ter os dados lidos do PDF (d). */
+const notaValida = (n) => n.d && typeof n.d === "object";
+/** Completa uma nota lida do aparelho ou do GitHub (partes sempre presentes). */
+function notaNormal(n) {
+  ["s", "p", "t", "v", "iss"].forEach((k) => {
+    if (!n.d[k] || typeof n.d[k] !== "object") n.d[k] = {};
+  });
+  if (!n.nome) n.nome = String(n.id);
+  return n;
+}
 let current = null;
 let notes = [];
 try {
@@ -16,7 +26,7 @@ try {
 } catch (e) {
   notes = [];
 }
-if (!Array.isArray(notes)) notes = [];
+notes = soItens(notes, notaValida).map(notaNormal);
 if (isProt()) {
   notes = [];
   try {
@@ -89,7 +99,7 @@ async function ghLoad() {
       );
     }
   }
-  notes = Array.isArray(arr) ? arr : [];
+  notes = soItens(arr, notaValida).map(notaNormal);
   return true;
 }
 /** Envia o banco de notas para o GitHub. */

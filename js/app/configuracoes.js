@@ -27,10 +27,7 @@ $("#cfgbtn").addEventListener("click", () => {
   window.scrollTo({ top: 0 });
 });
 $("#c_save").addEventListener("click", async () => {
-  let old = {};
-  try {
-    old = JSON.parse(lsGet(LS_CFG) || "{}");
-  } catch (e) {}
+  const old = lerCfg();
   const repo = $("#c_repo")
     .value.trim()
     .replace(/^https?:\/\/github\.com\//, "")

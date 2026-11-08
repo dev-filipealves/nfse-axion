@@ -50,11 +50,42 @@ function osPaperHtml(o) {
       brl(T.serv) +
       "</td></tr></tfoot></table>"
     : "";
-  // Quadro do cliente: CLIENTE | CONTATO  /  VEÍCULO/MODELO | DATA
-  const veiculo =
-    [o.veiculo, o.placa ? "Placa " + o.placa : ""]
-      .filter(Boolean)
-      .join(" · ") || "—";
+  // Quadro do cliente: CLIENTE | CONTATO / VEÍCULO | PLACA / DATA | GARANTIA
+  const ck = o.checklist || { itens: {}, obs: "" },
+    ckNomes = Object.keys(ck.itens || {});
+  const tabCk =
+    ckNomes.length || ck.obs
+      ? '<div class="osp-h">CHECKLIST DE ENTRADA</div><div class="osp-ck">' +
+        ckNomes
+          .map(
+            (n) =>
+              '<span class="' +
+              (ck.itens[n] === "ok" ? "ok" : "bad") +
+              '">' +
+              (ck.itens[n] === "ok" ? "✓ " : "✗ ") +
+              esc(n) +
+              (ck.itens[n] === "ok" ? "" : " — com defeito") +
+              "</span>",
+          )
+          .join("") +
+        "</div>" +
+        (ck.obs
+          ? '<div class="osp-foot">Entrada: ' + esc(ck.obs) + "</div>"
+          : "")
+      : "";
+  const pago = (o.status || "aberta") === "paga";
+  const pix = !pago && T.total > 0 ? pixPayload(T.total, "OS" + osNum(o)) : "";
+  const blocoPix = pix
+    ? '<div class="osp-pix"><div class="osp-pix-qr">' +
+      qrSvg(pix) +
+      '</div><div class="osp-pix-txt"><b>Pague com Pix</b><span>Chave: ' +
+      esc(pixChaveTexto()) +
+      "</span><span>Valor: " +
+      brl(T.total) +
+      "</span><small>Abra o app do banco, escolha Pix › Ler QR Code. Ou use o copia e cola:</small><code>" +
+      esc(pix) +
+      "</code></div></div>"
+    : "";
   const campo = (rot, val, forte) =>
     "<div><label>" +
     rot +
@@ -81,9 +112,12 @@ function osPaperHtml(o) {
     '<div class="osp-client">' +
     campo("CLIENTE", o.cliente, true) +
     campo("CONTATO", fmtTel(o.tel) || "—") +
-    campo("VEÍCULO/MODELO", veiculo) +
+    campo("VEÍCULO/MODELO", o.veiculo || "—") +
+    campo("PLACA", String(o.placa || "").toUpperCase() || "—") +
     campo("DATA", dataBR(o.data)) +
+    campo("GARANTIA", osGarantiaTexto(o)) +
     "</div>" +
+    tabCk +
     tabProd +
     tabServ +
     '<div class="osp-line"></div><div class="osp-sum"><span>Tempo de serviço: ' +
@@ -99,6 +133,7 @@ function osPaperHtml(o) {
     '<div class="osp-total"><span>TOTAL GERAL</span><b>' +
     brl(T.total) +
     "</b></div>" +
+    blocoPix +
     '<div class="osp-foot">Forma de pagamento: ' +
     esc(o.pagamento || "a definir") +
     "</div>" +
@@ -232,7 +267,11 @@ $("#os_share").addEventListener("click", async () => {
       " · " +
       osAtual.cliente +
       " · " +
-      brl(osTotals(osAtual).total);
+      brl(osTotals(osAtual).total) +
+      ((osAtual.status || "aberta") === "paga"
+        ? ""
+        : "\nPix copia e cola: " +
+          pixPayload(osTotals(osAtual).total, "OS" + osNum(osAtual)));
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         files: [file],
@@ -258,4 +297,15 @@ $("#os_share").addEventListener("click", async () => {
     if (e && e.name === "AbortError") say("Compartilhamento cancelado.");
     else say("Erro ao compartilhar: " + ((e && e.message) || e), true);
   }
+});
+
+/** Copia o "Pix copia e cola" da OS aberta, com o valor total. */
+$("#os_pix").addEventListener("click", () => {
+  if (!osAtual) return;
+  const T = osTotals(osAtual);
+  if (!(T.total > 0)) return say("Esta OS não tem valor a receber.", true);
+  copiarTexto(
+    pixPayload(T.total, "OS" + osNum(osAtual)),
+    "Pix copia e cola copiado (" + brl(T.total) + ").",
+  );
 });

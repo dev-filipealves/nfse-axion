@@ -252,3 +252,95 @@
   color: var(--muted);
   margin-top: 2px;
 }
+
+/* ---------- Checklist de entrada (editor) ---------- */
+.osck {
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+}
+.osck summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--accent-2);
+  padding: 4px 0;
+}
+.ckgrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin: 10px 0 4px;
+}
+.panel label.ckrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--fg);
+}
+.panel label.ckrow select {
+  width: auto;
+  min-width: 150px;
+  padding: 8px;
+  font-size: 14px;
+}
+#os_placa {
+  text-transform: uppercase;
+}
+
+/* ---------- Documento da OS: checklist e Pix ---------- */
+.osp-ck {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 20px;
+  font-size: 13px;
+}
+.osp-ck .ok {
+  color: #2e7d4f;
+}
+.osp-ck .bad {
+  color: #c0392b;
+  font-weight: 700;
+}
+.osp-pix {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin: 6px 0 16px;
+  padding: 16px 20px;
+  border: 1px solid #dfe4ec;
+  border-radius: 10px;
+}
+.osp-pix-qr {
+  width: 130px;
+  flex-shrink: 0;
+}
+.osp-pix-qr svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.osp-pix-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  font-size: 13.5px;
+}
+.osp-pix-txt b {
+  font-size: 16px;
+  color: #05133a;
+}
+.osp-pix-txt small {
+  color: #6b7a90;
+  margin-top: 4px;
+}
+.osp-pix-txt code {
+  font-size: 10px;
+  word-break: break-all;
+  color: #6b7a90;
+}

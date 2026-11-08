@@ -129,12 +129,14 @@ $("#or_csv").addEventListener("click", async () => {
       "Data",
       "Cliente",
       "Veículo",
+      "Placa",
       "Situação",
       "Peças",
       "Mão de obra",
       "Horas",
       "Desconto",
       "Total",
+      "Garantia",
     ],
   ].concat(
     D.lista.map((o) => {
@@ -145,12 +147,14 @@ $("#or_csv").addEventListener("click", async () => {
         dataBR(o.data),
         o.cliente,
         o.veiculo || "",
+        String(o.placa || "").toUpperCase(),
         OS_SIT[o.status || "aberta"],
         n(t.prod),
         n(t.serv),
         t.horas ? fmtHoras(t.horas) : "",
         n(t.desc),
         n(t.total),
+        osGarantiaTexto(o),
       ];
     }),
   );

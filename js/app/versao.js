@@ -75,7 +75,7 @@
 
 /* Confere se todos os arquivos carregados são da mesma publicação (js/base/config.js define AXION_BUILD) */
 window.addEventListener("load", function () {
-  var ESPERADO = "2026-11-08.1";
+  var ESPERADO = "2026-11-08.2";
   if (window.AXION_BUILD === ESPERADO) return;
   var m = document.getElementById("msg");
   if (m) {

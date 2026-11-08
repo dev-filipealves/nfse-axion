@@ -22,16 +22,21 @@ function lsSet(k, v) {
     localStorage.setItem(k, v);
   } catch (e) {}
 }
+/** Lê a configuração guardada (sempre um objeto, mesmo se estiver corrompida). */
+function lerCfg() {
+  try {
+    const c = JSON.parse(lsGet(LS_CFG) || "{}");
+    return c && typeof c === "object" && !Array.isArray(c) ? c : {};
+  } catch (e) {
+    return {};
+  }
+}
 /** Token liberado na memória (após a senha) e o horário do último uso, para o bloqueio automático. */
 let sessionToken = null,
   lastUse = 0;
 /** Indica se o token do GitHub está protegido por senha. */
 function isProt() {
-  try {
-    return !!JSON.parse(lsGet(LS_CFG) || "{}").enc;
-  } catch (e) {
-    return false;
-  }
+  return !!lerCfg().enc;
 }
 /** Conversões de texto e bytes usadas na criptografia. */
 const TE = new TextEncoder(),
@@ -116,10 +121,7 @@ async function ensureUnlocked() {
     lastUse = Date.now();
     return true;
   }
-  let c = {};
-  try {
-    c = JSON.parse(lsGet(LS_CFG) || "{}");
-  } catch (e) {}
+  const c = lerCfg();
   let msg = "Digite a senha para acessar as notas.";
   for (let i = 0; i < 5; i++) {
     const p = await askPass(msg);
@@ -136,12 +138,7 @@ async function ensureUnlocked() {
 }
 /** Lê a configuração do GitHub; o token vem da memória quando protegido. */
 function cfg() {
-  let c = {};
-  try {
-    c = JSON.parse(lsGet(LS_CFG) || "{}");
-  } catch (e) {
-    c = {};
-  }
+  const c = lerCfg();
   if (c.enc) c.token = sessionToken || "";
   return c;
 }

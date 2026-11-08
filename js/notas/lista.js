@@ -216,17 +216,27 @@ async function cobrar(id) {
     d.v.op +
     ", referente a: " +
     String((d.s && d.s.desc) || "serviço prestado").slice(0, 120) +
-    ".\nFico no aguardo da confirmação do pagamento. Obrigado!\n\nAXION | Sistemas Embarcados e Energia";
+    ".\n\nPix (" +
+    pixChaveTexto() +
+    "), copia e cola com o valor:\n" +
+    pixPayload(vOf(n), "NF" + d.numero) +
+    "\n\nFico no aguardo da confirmação do pagamento. Obrigado!\nAXION | Sistemas Embarcados e Energia";
   const r = await askText({
     titulo: "💬 Cobrar · " + n.nome,
     texto: msg,
     botoes: [
       { id: "wpp", rotulo: "WhatsApp" },
       { id: "email", rotulo: "E-mail" },
+      { id: "pix", rotulo: "💠 Copiar só o Pix", sec: true },
       { id: "cancelar", rotulo: "Cancelar", sec: true },
     ],
   });
-  if (r.acao === "wpp") {
+  if (r.acao === "pix") {
+    copiarTexto(
+      pixPayload(vOf(n), "NF" + d.numero),
+      "Pix copia e cola copiado (" + brl(vOf(n)) + ").",
+    );
+  } else if (r.acao === "wpp") {
     const tel = String((d.t && d.t.tel) || "").replace(/\D/g, "");
     const num = tel.length >= 10 ? (tel.length <= 11 ? "55" + tel : tel) : "";
     abrir("https://wa.me/" + num + "?text=" + encodeURIComponent(r.texto));

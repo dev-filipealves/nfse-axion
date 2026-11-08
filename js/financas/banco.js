@@ -15,7 +15,8 @@ try {
 } catch (e) {
   fin = [];
 }
-if (!Array.isArray(fin) || isProt()) {
+fin = soItens(fin);
+if (isProt()) {
   fin = [];
   try {
     localStorage.removeItem(LS_FIN);
@@ -66,7 +67,7 @@ async function finLoad() {
       );
     }
   }
-  fin = Array.isArray(arr) ? arr : [];
+  fin = soItens(arr);
   return true;
 }
 /** Envia o financeiro para o GitHub. */
